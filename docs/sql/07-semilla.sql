@@ -92,7 +92,7 @@ begin
 
   -- 3. Configuración ----------------------------------------------------------
   insert into public.configuracion_negocio (id, nombre, giro, logo_url, color_primario, telefono, direccion)
-  values (1, 'Ferretería La Tuerca', 'Ferretería', null, '#ea580c',
+  values (1, 'Ferretería La Tuerca', 'Ferretería', null, '#c2410c',
           '81 0000 0000', 'Av. Ejemplo 123, Col. Centro, Monterrey, N.L.')
   on conflict (id) do update
     set nombre = excluded.nombre,

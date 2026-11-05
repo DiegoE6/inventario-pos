@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { DEFAULT_PRIMARY } from "@/app/lib/brand";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,7 +19,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ea580c",
+  themeColor: DEFAULT_PRIMARY,
+  // Permite usar env(safe-area-inset-*) para la barra inferior en iPhone.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

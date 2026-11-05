@@ -41,7 +41,7 @@ create table if not exists public.configuracion_negocio (
   nombre          text not null check (length(trim(nombre)) between 1 and 100),
   giro            text,
   logo_url        text,
-  color_primario  text not null default '#ea580c'
+  color_primario  text not null default '#c2410c'
                   check (color_primario ~ '^#[0-9a-fA-F]{6}$'),
   telefono        text,
   direccion       text,
