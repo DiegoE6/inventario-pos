@@ -1,19 +1,58 @@
 @import "tailwindcss";
 
 /*
- * Colores de marca. En la Fase 8 --color-primary se tomará de
- * configuracion_negocio.color_primario para rebrandear por prospecto.
+ * Sistema visual — Fase 2. Solo tema claro (modo oscuro: pendiente Fase 9).
+ *
+ * --color-primary y --color-on-primary se sobreescriben por negocio con
+ * brandStyle() (app/lib/brand.ts) en un contenedor con `data-brand`.
  */
 @theme {
-  --color-primary: #ea580c;
-  --color-primary-foreground: #ffffff;
+  /* Marca */
+  --color-primary: #c2410c;
+  --color-on-primary: #ffffff;
+  --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
+  --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
 
+  /* Neutros cálidos */
   --color-background: #fafaf9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f5f5f4;
+  --color-border: #e7e5e4;
+  --color-border-strong: #d6d3d1;
   --color-foreground: #1c1917;
-  --color-muted: #78716c;
+  --color-muted: #57534e;
 
+  /* Estados */
+  --color-success: #047857;
+  --color-success-soft: #ecfdf5;
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-danger-soft: #fee2e2;
+
+  /* Tipografía */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Movimiento (Emil Kowalski): ease-out fuerte para respuesta inmediata */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Forma */
+  --radius-control: 10px;
+  --radius-card: 12px;
+}
+
+/*
+ * Los derivados se vuelven a declarar donde se cambia la marca: una variable
+ * CSS con var() se resuelve en el elemento donde se declara, así que sin esto
+ * el hover y el fondo suave seguirían usando el naranja de :root.
+ */
+[data-brand] {
+  --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
+  --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
