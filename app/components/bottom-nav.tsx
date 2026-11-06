@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { isActive, isMoreActive, MAIN_NAV } from "@/app/lib/nav";
+import { isActive, isMoreActive, MAIN_NAV, navFor } from "@/app/lib/nav";
+import type { Rol } from "@/app/lib/types";
 
 /**
  * Barra inferior del celular. Presentacional: recibe la ruta actual (en el
@@ -8,14 +9,19 @@ import { isActive, isMoreActive, MAIN_NAV } from "@/app/lib/nav";
  * Sin animación al cambiar de sección: se usa decenas de veces al día y
  * tiene que sentirse inmediata.
  */
-export function BottomNav({ pathname }: { pathname: string }) {
+export function BottomNav({ pathname, rol }: { pathname: string; rol: Rol }) {
+  // El cajero no ve Inventario: 4 columnas en lugar de 5.
+  const items = navFor(MAIN_NAV, rol);
   return (
     <nav
       aria-label="Secciones"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
-        {MAIN_NAV.map(({ href, label, icon: Icon }) => {
+      <ul
+        className="mx-auto grid h-16 max-w-lg"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
+        {items.map(({ href, label, icon: Icon }) => {
           const active = href === "/panel/mas" ? isMoreActive(pathname) : isActive(href, pathname);
           return (
             <li key={href}>

@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { buttonClasses } from "@/app/components/ui/button";
+import { Pagination as BasePagination } from "@/app/components/pagination";
 import type { ProductosQuery } from "@/app/lib/data";
 
 function href(query: ProductosQuery, pagina: number) {
@@ -14,34 +12,5 @@ function href(query: ProductosQuery, pagina: number) {
 }
 
 export function Pagination({ query, paginas }: { query: ProductosQuery; paginas: number }) {
-  if (paginas <= 1 && query.pagina <= 1) return null;
-  const prev = query.pagina > 1 ? Math.min(query.pagina - 1, paginas) : null;
-  const next = query.pagina < paginas ? query.pagina + 1 : null;
-  const disabled = "pointer-events-none opacity-40";
-
-  return (
-    <nav aria-label="Páginas" className="flex items-center justify-between gap-3">
-      <Link
-        href={prev ? href(query, prev) : "#"}
-        aria-disabled={!prev}
-        tabIndex={prev ? undefined : -1}
-        className={buttonClasses({ variant: "secondary", className: prev ? "" : disabled })}
-      >
-        <ChevronLeft aria-hidden className="size-[18px]" />
-        Anterior
-      </Link>
-      <p className="text-sm text-muted tabular-nums">
-        Página {Math.min(query.pagina, paginas)} de {paginas}
-      </p>
-      <Link
-        href={next ? href(query, next) : "#"}
-        aria-disabled={!next}
-        tabIndex={next ? undefined : -1}
-        className={buttonClasses({ variant: "secondary", className: next ? "" : disabled })}
-      >
-        Siguiente
-        <ChevronRight aria-hidden className="size-[18px]" />
-      </Link>
-    </nav>
-  );
+  return <BasePagination pagina={query.pagina} paginas={paginas} href={(n) => href(query, n)} />;
 }

@@ -46,7 +46,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
         </main>
       </div>
 
-      <PanelBottomNav />
+      <PanelBottomNav rol={session.rol} />
     </div>
   );
 }

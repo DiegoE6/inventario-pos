@@ -15,7 +15,7 @@ import { uuidv4 } from "@/app/lib/uuid";
 import { cobrar, type Ticket } from "../actions";
 import { CartBar } from "./cart-bar";
 import { CartPanel } from "./cart-panel";
-import { irAlLogin, refrescarProductos, SinSesionError } from "./fetch-pos";
+import { irAlLogin, refrescarProductos, SinSesionError } from "@/app/components/product-search/fetch";
 import { SearchPanel } from "./search-panel";
 import { TicketDialog } from "./ticket-dialog";
 

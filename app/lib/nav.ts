@@ -26,7 +26,8 @@ export const MAIN_NAV: NavItem[] = [
   { href: "/panel", label: "Inicio", icon: House },
   { href: "/panel/vender", label: "Vender", icon: ShoppingCart },
   { href: "/panel/productos", label: "Productos", icon: Package },
-  { href: "/panel/inventario", label: "Inventario", icon: Warehouse },
+  // Movimientos de inventario: solo dueño (la página usa requireDueno).
+  { href: "/panel/inventario", label: "Inventario", icon: Warehouse, soloDueno: true },
   { href: "/panel/mas", label: "Más", icon: Ellipsis },
 ];
 
