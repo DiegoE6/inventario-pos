@@ -116,8 +116,9 @@ export function ProductFilters({
         </div>
 
         {showInactivosToggle ? (
-          <label className="flex h-11 shrink-0 cursor-pointer items-center gap-2 text-sm text-muted">
+          <div className="flex h-11 shrink-0 items-center gap-2">
             <input
+              id="inactivos"
               type="checkbox"
               name="inactivos"
               value="1"
@@ -125,8 +126,10 @@ export function ProductFilters({
               onChange={(e) => navigate({ inactivos: e.target.checked })}
               className="size-5 rounded accent-[var(--color-primary)]"
             />
-            Inactivos
-          </label>
+            <label htmlFor="inactivos" className="flex h-11 cursor-pointer items-center text-sm text-muted">
+              Inactivos
+            </label>
+          </div>
         ) : null}
       </div>
     </form>

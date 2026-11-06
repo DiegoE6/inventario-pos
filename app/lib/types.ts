@@ -27,6 +27,8 @@ export type Configuracion = {
   giro: string | null;
   logo_url: string | null;
   color_primario: string;
+  telefono: string | null;
+  direccion: string | null;
 };
 
 export type Categoria = { id: number; nombre: string; activo: boolean };

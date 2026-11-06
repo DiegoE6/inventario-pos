@@ -1,7 +1,14 @@
 -- =============================================================================
 -- 05-funciones-ventas.sql — Cobrar y cancelar ventas
 -- Requiere: 01, 02, 03, 04
+--
+-- Nota (Fase 3): 12-venta-idempotente.sql reemplaza registrar_venta por una
+-- versión con clave de idempotencia (4 parámetros). Si vuelves a correr este
+-- script, corre 12 después. El DROP de abajo evita que convivan las dos
+-- versiones (una llamada con 3 argumentos sería ambigua).
 -- =============================================================================
+
+drop function if exists public.registrar_venta(jsonb, text, numeric, uuid);
 
 -- -----------------------------------------------------------------------------
 -- public.registrar_venta — cualquier usuario activo (dueño o cajero)

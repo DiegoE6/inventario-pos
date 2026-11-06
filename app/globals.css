@@ -55,6 +55,68 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+/*
+ * Impresión del ticket (impresora térmica de 58 u 80 mm). Solo se imprime el
+ * ticket; el ancho real lo pone el papel configurado en el driver. Monoespaciada
+ * y en negro puro para que se lea bien en papel térmico.
+ */
+@media print {
+  @page {
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .ticket-print,
+  .ticket-print * {
+    visibility: visible !important;
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+
+  dialog.ticket-dialog {
+    position: absolute;
+    inset: 0 auto auto 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    overflow: visible;
+    background: #fff;
+  }
+
+  dialog.ticket-dialog::backdrop {
+    display: none;
+  }
+
+  dialog.ticket-dialog > div,
+  dialog.ticket-dialog > div > div {
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .ticket-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 80mm;
+    padding: 3mm;
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);

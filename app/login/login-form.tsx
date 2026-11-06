@@ -6,12 +6,14 @@ import { Button } from "@/app/components/ui/button";
 import { Field, Input } from "@/app/components/ui/field";
 import { iniciarSesion, type LoginState } from "./actions";
 
-export function LoginForm({ notice }: { notice?: string }) {
+export function LoginForm({ notice, next }: { notice?: string; next: string }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(iniciarSesion, {});
   const error = state.error ?? (state.fieldErrors ? undefined : notice);
 
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
+      {/* El servidor lo vuelve a validar con safeNext. */}
+      <input type="hidden" name="next" value={next} />
       {error ? (
         <p
           role="alert"

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { env } from "@/app/lib/env";
+import { safeNext } from "@/app/lib/safe-next";
 
 /**
  * Proxy (Next 16; antes "middleware"). Dos tareas:
@@ -13,6 +14,9 @@ import { env } from "@/app/lib/env";
  * Es un chequeo OPTIMISTA: no consulta la base. La verificación real (perfil
  * activo y rol) la hace verifySession() en app/lib/auth.ts, en cada página.
  */
+/** Rutas que responden JSON: sin redirección a /login (ver abajo). */
+const API_PATHS = ["/panel/vender/productos"];
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -41,16 +45,23 @@ export async function proxy(request: NextRequest) {
 
   const { pathname, searchParams } = request.nextUrl;
   const isLogin = pathname === "/login";
+  // Endpoints de datos (fetch desde el cliente): no se redirigen; el propio
+  // Route Handler responde 401 y el cliente manda al login.
+  const isApi = API_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
-  if (!hasSession && !isLogin) {
-    return redirectWithCookies(new URL("/login", request.url), response);
+  if (!hasSession && !isLogin && !isApi) {
+    // Recordar a dónde iba, para regresarlo después de entrar.
+    const login = new URL("/login", request.url);
+    const next = safeNext(pathname + request.nextUrl.search);
+    if (next !== "/panel") login.searchParams.set("next", next);
+    return redirectWithCookies(login, response);
   }
 
-  // Con sesión, /login manda al panel. Excepción: si viene con ?error (por
-  // ejemplo, perfil inactivo), se queda para mostrar el mensaje; si no, se
-  // haría un ciclo /panel → /login → /panel.
+  // Con sesión, /login manda al panel (o a ?next). Excepción: si viene con
+  // ?error (por ejemplo, perfil inactivo), se queda para mostrar el mensaje;
+  // si no, se haría un ciclo /panel → /login → /panel.
   if (hasSession && isLogin && !searchParams.has("error")) {
-    return redirectWithCookies(new URL("/panel", request.url), response);
+    return redirectWithCookies(new URL(safeNext(searchParams.get("next")), request.url), response);
   }
 
   // Devolver ESTA respuesta: es la que trae las cookies renovadas.
