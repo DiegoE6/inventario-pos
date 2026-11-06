@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { safeNext } from "@/app/lib/safe-next";
 import { createClient } from "@/app/lib/supabase/server";
 import type { FormState } from "@/app/lib/types";
 
@@ -59,7 +60,8 @@ export async function iniciarSesion(_prev: LoginState, formData: FormData): Prom
     };
   }
 
-  redirect("/panel");
+  // Regresa a donde estaba (solo rutas internas de /panel; ver safeNext).
+  redirect(safeNext(formData.get("next")));
 }
 
 export async function cerrarSesion() {

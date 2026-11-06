@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/app/lib/supabase/server";
 import { DEFAULT_PRIMARY } from "@/app/lib/brand";
+import { ilikeContains } from "@/app/lib/search";
 import type { Categoria, Configuracion, Producto, Proveedor } from "@/app/lib/types";
 import type { Unidad } from "@/app/lib/format";
 
@@ -15,6 +16,8 @@ const CONFIG_DEFAULT: Configuracion = {
   giro: null,
   logo_url: null,
   color_primario: DEFAULT_PRIMARY,
+  telefono: null,
+  direccion: null,
 };
 
 /** Marca del negocio. `anon` también puede leerla (pantalla de login). */
@@ -22,7 +25,7 @@ export const getConfiguracion = cache(async (): Promise<Configuracion> => {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("configuracion_negocio")
-    .select("nombre, giro, logo_url, color_primario")
+    .select("nombre, giro, logo_url, color_primario, telefono, direccion")
     .eq("id", 1)
     .maybeSingle<Configuracion>();
   if (error) console.error("[config]", error);
@@ -94,17 +97,6 @@ export type ProductosQuery = {
   inactivos: boolean;
 };
 
-/**
- * Patrón ILIKE seguro para el filtro `or=(...)` de PostgREST:
- * 1. Escapa los comodines de LIKE (% _ \) para buscarlos literalmente.
- * 2. Lo envuelve en comillas dobles (escapando " y \) para que comas y
- *    paréntesis no rompan la sintaxis del filtro.
- */
-function ilikeValue(text: string): string {
-  const like = `%${text.replace(/[\\%_]/g, "\\$&")}%`;
-  return `"${like.replace(/["\\]/g, "\\$&")}"`;
-}
-
 export async function listProductos(query: ProductosQuery) {
   const supabase = await createClient();
   const from = (query.pagina - 1) * PAGE_SIZE;
@@ -118,7 +110,8 @@ export async function listProductos(query: ProductosQuery) {
   if (!query.inactivos) request = request.eq("activo", true);
   if (query.categoria !== null) request = request.eq("categoria_id", query.categoria);
   if (query.q) {
-    const v = ilikeValue(query.q);
+    // Escape para LIKE y para la sintaxis de or=(...) (app/lib/search.ts).
+    const v = ilikeContains(query.q);
     request = request.or(`nombre.ilike.${v},codigo.ilike.${v}`);
   }
 

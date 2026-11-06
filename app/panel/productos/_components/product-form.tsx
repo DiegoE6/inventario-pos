@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { Save } from "lucide-react";
 import { Notice } from "@/app/components/notice";
 import { Button } from "@/app/components/ui/button";
@@ -71,7 +71,18 @@ export function ProductForm({
   const u = UNIDAD_CORTA[v.unidad];
 
   return (
-    <form action={formAction} noValidate className="flex flex-col gap-6">
+    <form
+      // onSubmit + startTransition en lugar de action={...}: con action, React 19
+      // hace form.reset() al terminar y la casilla "Activo" (controlada) se
+      // quedaba mostrando su valor inicial aunque se guardara otro.
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => formAction(data));
+      }}
+      noValidate
+      className="flex flex-col gap-6"
+    >
       {state.error ? <Notice tone="danger">{state.error}</Notice> : null}
       {state.ok && state.message ? <Notice tone="success">{state.message}</Notice> : null}
 
@@ -236,19 +247,25 @@ export function ProductForm({
           </Field>
         </div>
 
-        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-base">
+        <div className="flex items-start gap-3">
           <input
+            id="activo"
             type="checkbox"
             name="activo"
             checked={v.activo}
             onChange={(e) => set("activo")(e.target.checked)}
-            className="size-5 rounded accent-[var(--color-primary)]"
+            aria-describedby="activo-hint"
+            className="mt-3 size-5 shrink-0 rounded accent-[var(--color-primary)]"
           />
-          <span>
-            Activo
-            <span className="block text-sm text-muted">Si lo desactivas, no aparece para vender.</span>
-          </span>
-        </label>
+          <div className="flex flex-col">
+            <label htmlFor="activo" className="flex min-h-11 cursor-pointer items-center text-base">
+              Activo
+            </label>
+            <p id="activo-hint" className="-mt-2 text-sm text-muted">
+              Si lo desactivas, no aparece para vender.
+            </p>
+          </div>
+        </div>
       </Section>
 
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] z-10 md:static">

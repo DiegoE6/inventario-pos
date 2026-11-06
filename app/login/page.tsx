@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { BrandMark } from "@/app/components/brand-mark";
 import { brandStyle } from "@/app/lib/brand";
 import { getConfiguracion } from "@/app/lib/data";
+import { safeNext } from "@/app/lib/safe-next";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Entrar" };
@@ -26,7 +27,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         </header>
 
         <div className="rounded-[var(--radius-card)] border border-border bg-surface p-5">
-          <LoginForm notice={NOTICES[errorKey]} />
+          <LoginForm notice={NOTICES[errorKey]} next={safeNext(sp.next)} />
         </div>
       </main>
     </div>
