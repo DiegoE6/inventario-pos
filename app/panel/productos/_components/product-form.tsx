@@ -6,7 +6,7 @@ import { Notice } from "@/app/components/notice";
 import { Button } from "@/app/components/ui/button";
 import { Field, Input, Select } from "@/app/components/ui/field";
 import { MarginPill } from "@/app/components/ui/margin-pill";
-import { UNIDAD_CORTA } from "@/app/lib/format";
+import { UNIDAD_CORTA, unidadCorta } from "@/app/lib/format";
 import { toCents } from "@/app/lib/money";
 import { UNIDADES, UNIDADES_ENTERAS, type FormState, type Unidad } from "@/app/lib/types";
 
@@ -214,7 +214,7 @@ export function ProductForm({
           {mode === "crear" ? (
             <Field
               id="stock_inicial"
-              label={`Stock inicial (${u})`}
+              label={`Stock inicial (${unidadCorta(v.unidad)})`}
               hint="Se registra como entrada de inventario."
               error={errors.stock_inicial}
             >
@@ -231,7 +231,7 @@ export function ProductForm({
           ) : null}
           <Field
             id="stock_minimo"
-            label={`Stock mínimo (${u})`}
+            label={`Stock mínimo (${unidadCorta(v.unidad)})`}
             hint="Debajo de esto, te avisa."
             error={errors.stock_minimo}
           >

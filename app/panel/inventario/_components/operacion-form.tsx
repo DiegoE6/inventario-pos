@@ -8,7 +8,7 @@ import { ProductPicker } from "@/app/components/product-search/product-picker";
 import { Button } from "@/app/components/ui/button";
 import { Field, Input } from "@/app/components/ui/field";
 import { aceptaDecimales, milliToString, parseQtyMilli, stockMilli } from "@/app/lib/cart";
-import { formatMoney, formatQuantity, UNIDAD_CORTA, type Unidad } from "@/app/lib/format";
+import { formatMoney, formatQuantity, UNIDAD_CORTA, unidadCorta, type Unidad } from "@/app/lib/format";
 import { toCents } from "@/app/lib/money";
 import { uuidv4 } from "@/app/lib/uuid";
 import {
@@ -98,8 +98,8 @@ function parseConteoMilli(value: string, unidad: Unidad): number | null {
 }
 
 const qty = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 3 });
-const signed = (milli: number, u: string) =>
-  `${milli > 0 ? "+" : milli < 0 ? "−" : ""}${qty.format(Math.abs(milli) / 1000)} ${u}`;
+const signed = (milli: number, unidad: Unidad) =>
+  `${milli > 0 ? "+" : milli < 0 ? "−" : ""}${qty.format(Math.abs(milli) / 1000)} ${unidadCorta(unidad, Math.abs(milli) / 1000)}`;
 
 function Formulario({
   operacion,
@@ -191,7 +191,7 @@ function Formulario({
         }
 
         if (res.ok) {
-          const mensaje = mensajeExito(res, u);
+          const mensaje = mensajeExito(res, producto.unidad);
           setClave(uuidv4()); // la siguiente operación es otra
           setCantidad("");
           setNota("");
@@ -286,8 +286,8 @@ function Formulario({
             </p>
             {previa ? (
               <p>
-                Con tu conteo de {qty.format(milli! / 1000)} {u}, la diferencia es{" "}
-                <span className="font-semibold tabular-nums">{signed(previa.diff, u)}</span>.
+                Con tu conteo de {qty.format(milli! / 1000)} {unidadCorta(producto.unidad, milli! / 1000)}, la diferencia es{" "}
+                <span className="font-semibold tabular-nums">{signed(previa.diff, producto.unidad)}</span>.
               </p>
             ) : null}
             <Button type="submit" className="self-start" pending={enviando} pendingLabel="Confirmando…">
@@ -301,7 +301,7 @@ function Formulario({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
             id={`${operacion}-cantidad`}
-            label={operacion === "conteo" ? `¿Cuánto contaste? (${u})` : `Cantidad (${u})`}
+            label={operacion === "conteo" ? `¿Cuánto contaste? (${unidadCorta(producto.unidad)})` : `Cantidad (${unidadCorta(producto.unidad)})`}
             error={cantidadError ?? fieldErrors.cantidad ?? fieldErrors.contado}
           >
             <Input
@@ -366,7 +366,7 @@ function Formulario({
             <span className="text-muted">Stock</span>
             <span>{formatQuantity(stockBase, producto.unidad)}</span>
             <ArrowRight aria-hidden className="size-4 text-muted" />
-            <span className="font-semibold">{qty.format(previa.nuevo / 1000)} {u}</span>
+            <span className="font-semibold">{qty.format(previa.nuevo / 1000)} {unidadCorta(producto.unidad, previa.nuevo / 1000)}</span>
             {operacion === "conteo" ? (
               <span
                 className={`rounded-full px-2.5 py-0.5 text-sm font-semibold ${
@@ -377,7 +377,7 @@ function Formulario({
                       : "bg-danger-soft text-danger"
                 }`}
               >
-                {previa.diff === 0 ? "Sin diferencia" : signed(previa.diff, u)}
+                {previa.diff === 0 ? "Sin diferencia" : signed(previa.diff, producto.unidad)}
               </span>
             ) : null}
           </p>
@@ -398,10 +398,10 @@ function Formulario({
   );
 }
 
-function mensajeExito(res: Extract<InventarioResult, { ok: true }>, u: string): string {
+function mensajeExito(res: Extract<InventarioResult, { ok: true }>, unidad: Unidad): string {
   const pre = res.repetido ? "Ya se había registrado; no se aplicó de nuevo. " : "";
   const m = res.movimiento;
   if (!m) return `${pre}El conteo coincide con el sistema: no se registró ningún ajuste.`;
   const nombre = { entrada: "Entrada registrada", merma: "Merma registrada", ajuste: "Ajuste registrado" }[m.tipo];
-  return `${pre}${nombre}: ${signed(Math.round(m.cantidad * 1000), u)} (${qty.format(m.stock_anterior)} → ${qty.format(m.stock_nuevo)} ${u}).`;
+  return `${pre}${nombre}: ${signed(Math.round(m.cantidad * 1000), unidad)} (${qty.format(m.stock_anterior)} → ${qty.format(m.stock_nuevo)} ${unidadCorta(unidad, m.stock_nuevo)}).`;
 }
