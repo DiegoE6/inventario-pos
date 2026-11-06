@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Movimiento, TipoMovimiento } from "@/app/lib/inventario";
-import { formatQuantity, UNIDAD_CORTA } from "@/app/lib/format";
+import { formatQuantity, unidadCorta } from "@/app/lib/format";
 import { formatFechaHora } from "@/app/lib/tz";
 
 export const TIPO_LABEL: Record<TipoMovimiento, string> = {
@@ -60,7 +60,7 @@ export function MovimientoList({
                   </Link>
                 ) : null}
                 <p className="text-[13px] text-muted tabular-nums">
-                  Stock {qty.format(m.stock_anterior)} → {qty.format(m.stock_nuevo)} {UNIDAD_CORTA[unidad]}
+                  Stock {qty.format(m.stock_anterior)} → {qty.format(m.stock_nuevo)} {unidadCorta(unidad, m.stock_nuevo)}
                 </p>
               </div>
               <span

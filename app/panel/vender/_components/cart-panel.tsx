@@ -13,7 +13,7 @@ import {
   type CartLine,
   type MetodoPago,
 } from "@/app/lib/cart";
-import { formatCents, formatMoney, UNIDAD_CORTA } from "@/app/lib/format";
+import { formatCents, formatMoney, UNIDAD_CORTA, unidadCorta } from "@/app/lib/format";
 
 const METODOS: { value: MetodoPago; label: string; icon: typeof Banknote }[] = [
   { value: "efectivo", label: "Efectivo", icon: Banknote },
@@ -289,7 +289,7 @@ function CartRow({
             <Plus aria-hidden className="size-[18px]" />
           </StepButton>
         </div>
-        <span className="text-sm text-muted">{u}</span>
+        <span className="text-sm text-muted">{unidadCorta(producto.unidad, milli === null ? undefined : milli / 1000)}</span>
         <span className="ml-auto text-base font-semibold tabular-nums">
           {milli === null ? "—" : formatCents(lineCents(producto.precio, milli))}
         </span>

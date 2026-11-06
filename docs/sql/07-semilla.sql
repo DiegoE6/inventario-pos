@@ -14,8 +14,14 @@
 --   - Perfiles: upsert de demo (dueño) y cajero (cajero), ambos activos.
 --     Upsert porque los usuarios pueden existir desde antes del trigger de 02.
 --   - 6 categorías, 5 proveedores, 40 productos.
---   - Ventas de los últimos 30 días + las de hoy hasta la hora actual, con más
---     movimiento en sábado. Una venta de hace 3 días queda cancelada.
+--   - Ventas de los últimos 30 días en horario de tienda (08:30 a 19:00), con
+--     más movimiento en sábado. Una venta de hace 3 días queda cancelada.
+--   - Ventas de hoy repartidas desde que abrió hasta la hora actual (mínimo 3),
+--     para que "Ventas de hoy" no salga en $0 al recargar.
+--
+-- Seguro de volver a correr con 12 y 14: ventas.clave_cliente toma su valor
+-- por defecto (gen_random_uuid) y movimientos_inventario.clave_cliente queda
+-- null (el índice único es parcial). El TRUNCATE borra las claves viejas.
 --   - Movimientos: una entrada inicial por producto (hace 31 días) y un
 --     movimiento por cada venta y cancelación, con stock anterior/nuevo.
 --   - 7 productos terminan por debajo de su mínimo (para la alerta).
@@ -26,8 +32,16 @@
 -- Los productos de la venta cancelada terminan con stock_final + lo que se
 -- regresó.
 --
--- Se usa setseed: el mismo día genera los mismos datos. Las cantidades de
--- ventas cambian según el día de la semana en que se corra.
+-- Se usa setseed: el mismo día genera los mismos datos.
+--
+-- Tendencia ligera al alza semana contra semana: cada día de la semana tiene
+-- un juego fijo de tickets (el ticket k de los jueves es el mismo todas las
+-- semanas: productos, cantidades, cajero, pago y hora; setseed por día de la
+-- semana y k). Hoy se dan todos; hace una semana faltan los más chicos (~25%
+-- del juego) y más atrás uno más cada dos semanas. Así, a cualquier hora,
+-- hoy lleva lo mismo que el mismo día de la semana pasada más algunas ventas
+-- chicas repartidas en el día: "vs. jueves pasado" sale un poco arriba y no
+-- depende de que un ticket grande caiga en un día o en otro.
 -- =============================================================================
 
 create or replace function privado.cargar_semilla(
@@ -45,9 +59,16 @@ declare
   v_hoy      date := (now() at time zone 'America/Monterrey')::date;
   v_inicio   timestamptz;
   v_dia      date;
-  v_hora     time;
+  v_abre     time;
+  v_rango    interval;
+  v_ahora    time;
   v_ts       timestamptz;
   v_n        int;
+  v_k        int;
+  v_dow      int;
+  v_semanas  int;
+  v_quitar   int;
+  v_limite   int;
   v_renglones int;
   v_ids      uuid[];
   v_cants    numeric[];
@@ -207,27 +228,31 @@ begin
     usuario_id  uuid
   ) on commit drop;
 
-  for v_dia in
-    select d::date
-    from generate_series((v_hoy - 30)::timestamp, v_hoy::timestamp, interval '1 day') d
-  loop
-    -- Sábado es el día fuerte; domingo medio día.
-    v_n := case extract(isodow from v_dia)
-             when 6 then 14 + floor(random() * 5)::int
-             when 7 then  5 + floor(random() * 4)::int
-             else         7 + floor(random() * 5)::int
-           end;
+  -- Juego de tickets de cada día de la semana (ver encabezado). Cada ticket
+  -- sale de su propia semilla (día de la semana y k), así que es el mismo
+  -- todas las semanas. orden = 1 es el ticket más chico de su día.
+  drop table if exists pg_temp.semilla_tickets;
+  create temp table semilla_tickets (
+    dow        int,
+    k          int,
+    u          float8,  -- hora: fracción del horario; el ticket k cae en su k-ésima parte
+    usuario_id uuid,
+    metodo     text,
+    ids        uuid[],
+    cants      numeric[],
+    total      numeric(12,2),
+    pago       numeric(12,2),
+    orden      int
+  ) on commit drop;
 
-    for v_hora in
-      select t.h
-      from (
-        select time '08:30' + random() * interval '10 hours 30 minutes' as h
-        from generate_series(1, v_n)
-      ) t
-      order by t.h
-    loop
-      v_ts := (v_dia + v_hora) at time zone 'America/Monterrey';
-      exit when v_ts > now();  -- hoy: solo hasta la hora actual
+  for v_dow in 1 .. 7 loop
+    -- Sábado es el día fuerte; domingo medio día.
+    v_n := case v_dow
+             when 1 then 9  when 2 then 9  when 3 then 10 when 4 then 10
+             when 5 then 11 when 6 then 17 else 7
+           end;
+    for v_k in 1 .. v_n loop
+      perform setseed((hashtext(format('venta-%s-%s', v_dow, v_k)) / 2147483648.0)::float8);
 
       v_usuario := case when random() < 0.7 then v_cajero else v_dueno end;
 
@@ -276,6 +301,59 @@ begin
       else
         v_pago := v_total;
       end if;
+
+      insert into pg_temp.semilla_tickets (dow, k, u, usuario_id, metodo, ids, cants, total, pago)
+      values (v_dow, v_k, (v_k - 1 + random()) / v_n, v_usuario, v_metodo, v_ids, v_cants, v_total, v_pago);
+    end loop;
+  end loop;
+
+  update pg_temp.semilla_tickets t
+  set orden = o.orden
+  from (select dow, k, row_number() over (partition by dow order by total, k) as orden
+        from pg_temp.semilla_tickets) o
+  where o.dow = t.dow and o.k = t.k;
+
+  for v_dia in
+    select d::date
+    from generate_series((v_hoy - 30)::timestamp, v_hoy::timestamp, interval '1 day') d
+  loop
+    -- Hoy se dan todos los tickets del juego. Hace una semana faltan los más
+    -- chicos (~25%, al menos uno); más atrás, uno más cada dos semanas.
+    v_dow := extract(isodow from v_dia);
+    v_semanas := (v_hoy - v_dia) / 7;
+    select count(*) into v_n from pg_temp.semilla_tickets where dow = v_dow;
+    v_quitar := case when v_semanas = 0 then 0
+                     else ceil(v_n * 0.25)::int + (v_semanas - 1) / 2 end;
+    v_limite := null;  -- todos
+
+    -- Horario de tienda: 08:30 a 19:00.
+    v_abre  := time '08:30';
+    v_rango := interval '10 hours 30 minutes';
+
+    -- Hoy: el mismo plan de día completo, cortado en la hora actual (el
+    -- "exit when" de abajo), para comparar parejo contra la semana pasada.
+    -- Antes de las 09:30 casi no hay horario transcurrido: para que "Ventas
+    -- de hoy" no salga en $0 al recargar, 3 ventas caen en las últimas horas
+    -- (hasta 3) antes de ahora.
+    if v_dia = v_hoy then
+      v_ahora := least((now() at time zone 'America/Monterrey')::time, time '19:00');
+      if v_ahora < time '09:30' then
+        v_rango := greatest(least(v_ahora - time '00:00', interval '3 hours') - interval '1 minute',
+                            interval '0');
+        v_abre  := v_ahora - v_rango - interval '1 minute';
+        v_limite := 3;
+      end if;
+    end if;
+
+    for v_ts, v_usuario, v_metodo, v_ids, v_cants, v_total, v_pago in
+      select (v_dia + (v_abre + t.u * v_rango)) at time zone 'America/Monterrey',
+             t.usuario_id, t.metodo, t.ids, t.cants, t.total, t.pago
+      from pg_temp.semilla_tickets t
+      where t.dow = v_dow and t.orden > v_quitar
+      order by t.u
+      limit v_limite
+    loop
+      exit when v_ts > now();  -- hoy: solo hasta la hora actual
 
       insert into public.ventas
         (subtotal, total, metodo_pago, pago_recibido, cambio, usuario_id, creado_en)
@@ -384,6 +462,10 @@ select
   (select count(*) from public.productos)                         as productos,
   (select count(*) from public.v_stock_bajo)                      as stock_bajo,
   (select count(*) from public.ventas where estado = 'completada') as ventas,
+  (select count(*) from public.ventas
+    where estado = 'completada'
+      and creado_en >= ((now() at time zone 'America/Monterrey')::date)::timestamp
+                       at time zone 'America/Monterrey')        as ventas_hoy,
   (select count(*) from public.ventas where estado = 'cancelada')  as canceladas,
   (select count(*) from public.movimientos_inventario)            as movimientos,
   (select sum(total) from public.ventas where estado = 'completada') as total_vendido;
