@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PackagePlus } from "lucide-react";
 import { Notice } from "@/app/components/notice";
 import { PageHeader } from "@/app/components/page-header";
+import { buttonClasses } from "@/app/components/ui/button";
 import { StockBadge } from "@/app/components/ui/stock-badge";
 import { verifySession } from "@/app/lib/auth";
 import { getCategorias, getProducto, getProveedores } from "@/app/lib/data";
+import { movimientosDeProducto } from "@/app/lib/inventario";
+import { MovimientoList } from "../../inventario/_components/movimiento-list";
 import { formatMoney, formatQuantity } from "@/app/lib/format";
 import { actualizarProducto } from "../actions";
 import { ProductForm } from "../_components/product-form";
@@ -66,12 +71,27 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
   }
 
   const creado = sp.guardado === "creado";
+  // Solo dueño (RLS de movimientos): historial y accesos a inventario.
+  const movimientos = await movimientosDeProducto(producto.id, 10);
+  const q = `?producto=${producto.id}`;
 
   return (
     <>
       <PageHeader title={producto.nombre} back={back} />
       {creado ? <Notice tone="success">Producto creado.</Notice> : null}
       {stockCard}
+      <div className="flex flex-wrap gap-2">
+        <Link href={`/panel/inventario/entrada${q}`} className={buttonClasses()}>
+          <PackagePlus aria-hidden className="size-[18px]" />
+          Registrar entrada
+        </Link>
+        <Link href={`/panel/inventario/merma${q}`} className={buttonClasses({ variant: "secondary" })}>
+          Merma
+        </Link>
+        <Link href={`/panel/inventario/conteo${q}`} className={buttonClasses({ variant: "secondary" })}>
+          Conteo
+        </Link>
+      </div>
       <ProductForm
         key={producto.id}
         mode="editar"
@@ -93,6 +113,18 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
         categorias={categorias.filter((c) => c.activo || c.id === producto.categoria_id)}
         proveedores={proveedores.filter((p) => p.activo || p.id === producto.proveedor_id)}
       />
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-lg font-semibold">Historial</h2>
+          <Link
+            href={`/panel/inventario${q}`}
+            className="text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+          >
+            Ver todo
+          </Link>
+        </div>
+        <MovimientoList movimientos={movimientos} showProducto={false} vacio="Todavía no tiene movimientos." />
+      </section>
     </>
   );
 }

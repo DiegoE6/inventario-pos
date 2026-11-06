@@ -7,7 +7,15 @@
 --   public.registrar_ajuste      API (dueño): conteo físico
 --
 -- Las funciones de ventas (05) también pasan por privado.aplicar_movimiento.
+--
+-- Nota (Fase 4): 14-movimiento-idempotente.sql reemplaza registrar_movimiento
+-- y registrar_ajuste por versiones con clave de idempotencia. Si vuelves a
+-- correr este script, corre 14 después. Los DROP de abajo evitan que convivan
+-- las dos versiones (una llamada con menos argumentos sería ambigua).
 -- =============================================================================
+
+drop function if exists public.registrar_movimiento(uuid, text, numeric, numeric, text, uuid);
+drop function if exists public.registrar_ajuste(uuid, numeric, text, uuid, numeric);
 
 -- -----------------------------------------------------------------------------
 -- privado.aplicar_movimiento

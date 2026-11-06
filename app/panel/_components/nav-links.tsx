@@ -7,15 +7,15 @@ import { isActive, MAIN_NAV, MORE_NAV, navFor } from "@/app/lib/nav";
 import type { Rol } from "@/app/lib/types";
 
 /** Barra inferior con la ruta actual (solo celular). */
-export function PanelBottomNav() {
+export function PanelBottomNav({ rol }: { rol: Rol }) {
   const pathname = usePathname();
-  return <BottomNav pathname={pathname} />;
+  return <BottomNav pathname={pathname} rol={rol} />;
 }
 
 /** Enlaces de la barra lateral (escritorio). "Más" se despliega aquí mismo. */
 export function SidebarLinks({ rol }: { rol: Rol }) {
   const pathname = usePathname();
-  const main = MAIN_NAV.filter((i) => i.href !== "/panel/mas");
+  const main = navFor(MAIN_NAV, rol).filter((i) => i.href !== "/panel/mas");
   const more = navFor(MORE_NAV, rol);
 
   return (

@@ -40,11 +40,13 @@ export async function refrescarProductos(ids: string[]) {
 }
 
 /**
- * 401 → al login (el carrito queda guardado en este navegador). Navegación
- * completa a propósito: descarta la caché del router, que tiene datos de una
- * sesión que ya no es válida.
+ * 401 → al login, con ?next para regresar a la página actual (el servidor lo
+ * valida con safeNext). En el punto de venta el carrito queda guardado en este
+ * navegador. Navegación completa a propósito: descarta la caché del router,
+ * que tiene datos de una sesión que ya no es válida.
  */
 export function irAlLogin() {
+  const next = encodeURIComponent(window.location.pathname + window.location.search);
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-  window.location.assign("/login?next=%2Fpanel%2Fvender");
+  window.location.assign(`/login?next=${next}`);
 }

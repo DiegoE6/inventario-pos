@@ -257,7 +257,7 @@ export default function MuestraPage() {
         </Section>
       </main>
 
-      <BottomNav pathname="/panel/productos" />
+      <BottomNav pathname="/panel/productos" rol="dueno" />
     </div>
   );
 }

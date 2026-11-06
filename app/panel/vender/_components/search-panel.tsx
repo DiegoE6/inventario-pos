@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type Ref } from "react";
-import { LoaderCircle, ScanBarcode, Search, X } from "lucide-react";
+import type { Ref } from "react";
+import { ProductSearchInput } from "@/app/components/product-search/search-input";
+import { useProductSearch } from "@/app/components/product-search/use-product-search";
 import { cantidadEnCarrito, type CartLine, type PosProduct } from "@/app/lib/cart";
 import { formatMoney, formatQuantity } from "@/app/lib/format";
-import { buscarPorCodigo, buscarProductos, irAlLogin, SinSesionError } from "./fetch-pos";
 
 /**
- * Buscador con foco automático. Busca 150 ms después de dejar de escribir.
- * Enter (lo que manda un lector de barras al final) busca el código exacto y,
- * si existe, lo agrega directo y limpia el campo.
+ * Buscador del punto de venta, con foco automático. La lógica (retardo,
+ * respuestas viejas descartadas, Enter con código exacto) vive en
+ * useProductSearch, compartida con inventario.
  */
 export function SearchPanel({
   inputRef,
@@ -22,72 +22,8 @@ export function SearchPanel({
   lines: CartLine[];
   onAdd: (p: PosProduct, opts?: { fromScan?: boolean }) => void;
 }) {
-  const [q, setQ] = useState("");
-  const [results, setResults] = useState<PosProduct[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [aviso, setAviso] = useState<string | null>(null);
-  // Cada búsqueda lleva un número; las respuestas viejas se descartan.
-  const reqId = useRef(0);
-
-  function fallo(e: unknown) {
-    if (e instanceof SinSesionError) irAlLogin();
-    else if (!(e instanceof DOMException && e.name === "AbortError")) {
-      setAviso("No se pudo buscar. Revisa tu conexión.");
-    }
-  }
-
-  // Búsqueda con retardo (150 ms).
-  useEffect(() => {
-    const texto = q.trim();
-    if (!texto) return;
-    const id = ++reqId.current;
-    const ctrl = new AbortController();
-    const t = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const productos = await buscarProductos(texto, ctrl.signal);
-        if (id === reqId.current) setResults(productos);
-      } catch (e) {
-        if (id === reqId.current) fallo(e);
-      } finally {
-        if (id === reqId.current) setLoading(false);
-      }
-    }, 150);
-    return () => {
-      clearTimeout(t);
-      ctrl.abort();
-    };
-  }, [q]);
-
-  function limpiar() {
-    reqId.current++; // descarta búsquedas en curso
-    setQ("");
-    setResults(null);
-    setLoading(false);
-  }
-
-  async function onEnter() {
-    const codigo = q.trim();
-    if (!codigo) return;
-    const id = ++reqId.current;
-    setLoading(true);
-    try {
-      const producto = await buscarPorCodigo(codigo);
-      if (id !== reqId.current) return;
-      if (producto) {
-        onAdd(producto, { fromScan: true });
-        setAviso(null);
-        limpiar();
-        return;
-      }
-      setAviso(`No hay un producto activo con el código "${codigo}".`);
-      setResults(await buscarProductos(codigo));
-    } catch (e) {
-      fallo(e);
-    } finally {
-      if (id === reqId.current) setLoading(false);
-    }
-  }
+  const search = useProductSearch({ onExact: (p) => onAdd(p, { fromScan: true }) });
+  const { q, results, loading, aviso } = search;
 
   const lista = results ?? frecuentes;
   const titulo = results ? null : frecuentes.length ? "Más vendidos" : null;
@@ -95,60 +31,14 @@ export function SearchPanel({
   return (
     <section aria-label="Buscar productos" className="flex flex-col gap-3">
       <div className="sticky top-0 z-20 -mx-4 bg-background/95 px-4 pb-2 pt-1 backdrop-blur md:-mx-6 md:px-6 lg:static lg:mx-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-        <label htmlFor="pos-buscar" className="sr-only">
-          Buscar por nombre o escanear código
-        </label>
-        <div className="relative">
-          <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted" />
-          <input
-            ref={inputRef}
-            id="pos-buscar"
-            type="search"
-            inputMode="search"
-            enterKeyHint="search"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            autoFocus
-            placeholder="Buscar o escanear código"
-            value={q}
-            maxLength={100}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setAviso(null);
-              if (!e.target.value.trim()) {
-                reqId.current++;
-                setResults(null);
-                setLoading(false);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void onEnter();
-              } else if (e.key === "Escape" && q) {
-                limpiar();
-              }
-            }}
-            className="h-12 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-11 pr-11 text-base text-foreground placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-search-cancel-button]:hidden"
-          />
-          <span className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
-            {loading ? (
-              <LoaderCircle aria-label="Buscando" className="mr-1.5 size-5 animate-spin text-muted" />
-            ) : q ? (
-              <button
-                type="button"
-                aria-label="Borrar búsqueda"
-                onClick={limpiar}
-                className="flex size-9 items-center justify-center rounded-full text-muted hover:bg-surface-muted"
-              >
-                <X aria-hidden className="size-4" />
-              </button>
-            ) : (
-              <ScanBarcode aria-hidden className="mr-2 size-5 text-muted" />
-            )}
-          </span>
-        </div>
+        <ProductSearchInput
+          id="pos-buscar"
+          inputRef={inputRef}
+          label="Buscar por nombre o escanear código"
+          placeholder="Buscar o escanear código"
+          autoFocus
+          search={search}
+        />
         {aviso ? (
           <p role="status" className="mt-2 text-sm text-danger">
             {aviso}
