@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { FlaskConical } from "lucide-react";
 import { BrandMark } from "@/app/components/brand-mark";
 import { verifySession } from "@/app/lib/auth";
 import { brandStyle } from "@/app/lib/brand";
 import { getConfiguracion } from "@/app/lib/data";
+import { demoActivo } from "@/app/lib/demo";
 import { LogoutForm } from "./_components/logout-form";
 import { PanelBottomNav, SidebarLinks } from "./_components/nav-links";
 
@@ -41,6 +43,15 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
 
       {/* Contenido. En celular deja espacio para la barra inferior. */}
       <div className="flex min-w-0 flex-1 flex-col pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)] md:pb-0">
+        {demoActivo() ? (
+          <p
+            role="note"
+            className="flex items-center justify-center gap-2 border-b border-border bg-primary/8 px-4 py-2 text-center text-[13px] leading-snug text-muted"
+          >
+            <FlaskConical aria-hidden className="size-4 shrink-0 text-primary" />
+            <span>Estás viendo un demo · los datos se reinician cada noche</span>
+          </p>
+        ) : null}
         <main className="mx-auto flex w-full max-w-[1100px] flex-1 flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
           {children}
         </main>

@@ -1,23 +1,32 @@
 -- =============================================================================
 -- 07-semilla.sql — Datos de demostración
--- Requiere: 01 a 06, y los dos usuarios creados en Authentication > Users.
+-- Requiere: 01 a 06, y los tres usuarios creados en Authentication > Users
+-- (dueño, cajero y cajero de turno).
 --
 -- ⚠️  BORRA Y VUELVE A CARGAR todos los datos del negocio: productos,
 --     catálogos, ventas y movimientos. No borra usuarios. Solo para la base
 --     de demo.
 --
--- Crea privado.cargar_semilla() y la ejecuta. En la Fase 6, reset_demo()
--- solo tendrá que llamarla.
+-- Crea privado.cargar_semilla() y la ejecuta. reset_demo() (18) la llama
+-- cada noche.
 --
 -- Qué carga:
 --   - Configuración de "Ferretería La Tuerca".
---   - Perfiles: upsert de demo (dueño) y cajero (cajero), ambos activos.
---     Upsert porque los usuarios pueden existir desde antes del trigger de 02.
---   - 6 categorías, 5 proveedores, 40 productos.
+--   - Perfiles: upsert de demo (dueño), cajero (cajero) y turno (cajero de
+--     turno), los tres activos. Upsert porque los usuarios pueden existir
+--     desde antes del trigger de 02.
+--   - Las ventas de la semilla son del cajero de turno (70%) y del dueño
+--     (30%). El cajero demo no tiene ventas: quien entra como cajero ve "Tus
+--     ventas de hoy" en $0 y solo sube con lo que él cobra.
+--   - 6 categorías, 5 proveedores, 40 productos. Los ids no cambian entre
+--     recargas (productos: derivados del código), para que los carritos
+--     guardados en el navegador sobrevivan al reinicio nocturno.
 --   - Ventas de los últimos 30 días en horario de tienda (08:30 a 19:00), con
 --     más movimiento en sábado. Una venta de hace 3 días queda cancelada.
---   - Ventas de hoy repartidas desde que abrió hasta la hora actual (mínimo 3),
---     para que "Ventas de hoy" no salga en $0 al recargar.
+--   - Ventas de hoy: las que ya pasaron se cargan; las que faltan quedan en
+--     privado.demo_ventas_pendientes y privado.avanzar_demo() (18) las cobra
+--     a su hora con registrar_venta. Si se carga de madrugada, hoy arranca en
+--     $0 y se llena durante el día.
 --
 -- Seguro de volver a correr con 12 y 14: ventas.clave_cliente toma su valor
 -- por defecto (gen_random_uuid) y movimientos_inventario.clave_cliente queda
@@ -26,11 +35,12 @@
 --     movimiento por cada venta y cancelación, con stock anterior/nuevo.
 --   - 7 productos terminan por debajo de su mínimo (para la alerta).
 --
--- Cuadre del stock: el stock final de cada producto está fijado abajo
--- (columna stock_final). La entrada inicial se calcula hacia atrás:
--- stock_final + todo lo vendido. Así el stock nunca baja de stock_final.
--- Los productos de la venta cancelada terminan con stock_final + lo que se
--- regresó.
+-- Cuadre del stock: el stock de cada producto al CIERRE DE HOY está fijado
+-- abajo (columna stock_final). La entrada inicial se calcula hacia atrás:
+-- stock_final + todo lo vendido + lo pendiente de hoy. Al cargar, el stock
+-- trae lo que falta vender hoy y baja a stock_final conforme se cobran los
+-- pendientes. Los productos de la venta cancelada terminan con stock_final
+-- + lo que se regresó.
 --
 -- Se usa setseed: el mismo día genera los mismos datos.
 --
@@ -44,9 +54,32 @@
 -- depende de que un ticket grande caiga en un día o en otro.
 -- =============================================================================
 
+-- Ventas de hoy que todavía no llegan a su hora. Solo la usan la semilla y
+-- privado.avanzar_demo() (18). Esquema privado: sin acceso desde la API.
+create table if not exists privado.demo_ventas_pendientes (
+  clave       uuid primary key,          -- se pasa a registrar_venta (idempotencia)
+  programada  timestamptz not null,
+  usuario_id  uuid not null,
+  metodo_pago text not null,
+  pago        numeric(12,2) not null,    -- lo que pagó en la semilla
+  items       jsonb not null,            -- [{producto_id, cantidad}]
+  estado      text not null default 'pendiente'
+              check (estado in ('pendiente', 'aplicada', 'omitida')),
+  motivo      text,
+  venta_id    uuid,
+  aplicada_en timestamptz
+);
+create index if not exists demo_ventas_pendientes_programada_idx
+  on privado.demo_ventas_pendientes (programada) where estado = 'pendiente';
+revoke all on privado.demo_ventas_pendientes from public, anon, authenticated, service_role;
+
+-- La firma cambió en la Fase 6 (tercer correo).
+drop function if exists privado.cargar_semilla(text, text);
+
 create or replace function privado.cargar_semilla(
   p_correo_dueno  text default 'demo@latuerca.test',
-  p_correo_cajero text default 'cajero@latuerca.test'
+  p_correo_cajero text default 'cajero@latuerca.test',
+  p_correo_turno  text default 'turno@latuerca.test'
 )
 returns void
 language plpgsql
@@ -56,19 +89,18 @@ as $$
 declare
   v_dueno    uuid;
   v_cajero   uuid;
+  v_turno    uuid;
   v_hoy      date := (now() at time zone 'America/Monterrey')::date;
   v_inicio   timestamptz;
   v_dia      date;
   v_abre     time;
   v_rango    interval;
-  v_ahora    time;
   v_ts       timestamptz;
   v_n        int;
   v_k        int;
   v_dow      int;
   v_semanas  int;
   v_quitar   int;
-  v_limite   int;
   v_renglones int;
   v_ids      uuid[];
   v_cants    numeric[];
@@ -83,16 +115,18 @@ begin
   -- 1. Usuarios -------------------------------------------------------------
   select u.id into v_dueno  from auth.users u where lower(u.email) = lower(p_correo_dueno);
   select u.id into v_cajero from auth.users u where lower(u.email) = lower(p_correo_cajero);
+  select u.id into v_turno  from auth.users u where lower(u.email) = lower(p_correo_turno);
 
-  if v_dueno is null or v_cajero is null then
+  if v_dueno is null or v_cajero is null or v_turno is null then
     raise exception
-      'Faltan usuarios demo. Crea % y % en Authentication > Users (con Auto Confirm) y vuelve a correr este script.',
-      p_correo_dueno, p_correo_cajero;
+      'Faltan usuarios demo. Crea %, % y % en Authentication > Users (con Auto Confirm) y vuelve a correr este script.',
+      p_correo_dueno, p_correo_cajero, p_correo_turno;
   end if;
 
   insert into public.perfiles (id, nombre, rol, activo)
   values (v_dueno,  'Dueño (demo)',  'dueno',  true),
-         (v_cajero, 'Cajero (demo)', 'cajero', true)
+         (v_cajero, 'Cajero (demo)', 'cajero', true),
+         (v_turno,  'Cajero de turno', 'cajero', true)
   on conflict (id) do update
     set nombre = excluded.nombre,
         rol    = excluded.rol,
@@ -107,6 +141,7 @@ begin
     public.categorias,
     public.proveedores
   restart identity;
+  truncate table privado.demo_ventas_pendientes;
 
   perform setseed(0.42);
   v_inicio := ((v_hoy - 31) + time '08:00') at time zone 'America/Monterrey';
@@ -161,7 +196,7 @@ begin
     ('TOR-003', 'Taquete de plástico 1/4"',                     'Tornillería', 'Tornillos y Fijaciones del Norte', 'pieza',  0.60,   1.50, 200, 640, 6),
     ('TOR-004', 'Clavo estándar 2 1/2"',                         'Tornillería', 'Tornillos y Fijaciones del Norte', 'kilo',  32.00,  55.00,  10, 26.5, 5),
     ('TOR-005', 'Pija autorroscante 8 x 1"',                     'Tornillería', 'Tornillos y Fijaciones del Norte', 'pieza',  0.80,   2.00, 150, 420, 6),
-    ('TOR-006', 'Tuerca hexagonal 3/8"',                         'Tornillería', 'Tornillos y Fijaciones del Norte', 'pieza',  1.20,   3.00, 100,  85, 5),
+    ('TOR-006', 'Tuerca hexagonal 3/8"',                         'Tornillería', 'Tornillos y Fijaciones del Norte', 'pieza',  1.20,   3.00, 100,  60, 5),
     ('TOR-007', 'Rondana plana 3/8"',                            'Tornillería', 'Tornillos y Fijaciones del Norte', 'pieza',  0.50,   1.50, 100, 310, 4),
     -- Herramienta
     ('HER-001', 'Martillo de uña 16 oz',                         'Herramienta', 'Distribuidora Ferretera Regia',    'pieza', 95.00, 159.00,   4,   9, 3),
@@ -173,7 +208,7 @@ begin
     ('HER-007', 'Segueta 12"',                                   'Herramienta', 'Distribuidora Ferretera Regia',    'pieza', 22.00,  39.00,  10,  31, 3),
     -- Eléctrico
     ('ELE-001', 'Cable THW calibre 12',                          'Eléctrico',   'Eléctrica Industrial Monterrey',   'metro',  9.50,  16.00,  50, 182, 7),
-    ('ELE-002', 'Cable THW calibre 14',                          'Eléctrico',   'Eléctrica Industrial Monterrey',   'metro',  7.00,  12.50,  50,  38, 6),
+    ('ELE-002', 'Cable THW calibre 14',                          'Eléctrico',   'Eléctrica Industrial Monterrey',   'metro',  7.00,  12.50,  50,  30, 6),
     ('ELE-003', 'Foco LED 9 W luz blanca',                       'Eléctrico',   'Eléctrica Industrial Monterrey',   'pieza', 28.00,  49.00,  20,  64, 8),
     ('ELE-004', 'Apagador sencillo',                             'Eléctrico',   'Eléctrica Industrial Monterrey',   'pieza', 22.00,  39.00,  10,  27, 4),
     ('ELE-005', 'Contacto doble polarizado',                     'Eléctrico',   'Eléctrica Industrial Monterrey',   'pieza', 30.00,  52.00,  10,  22, 4),
@@ -182,7 +217,7 @@ begin
     -- Plomería
     ('PLO-001', 'Tubo de cobre 1/2"',                            'Plomería',    'Hidráulica Santa Catarina',        'metro', 85.00, 135.00,  12,  40, 3),
     ('PLO-002', 'Codo de cobre 1/2" x 90°',                      'Plomería',    'Hidráulica Santa Catarina',        'pieza',  9.00,  16.00,  30, 112, 5),
-    ('PLO-003', 'Llave de paso 1/2"',                            'Plomería',    'Hidráulica Santa Catarina',        'pieza', 95.00, 165.00,   5,   4, 2),
+    ('PLO-003', 'Llave de paso 1/2"',                            'Plomería',    'Hidráulica Santa Catarina',        'pieza', 95.00, 165.00,   5,   3, 2),
     ('PLO-004', 'Cinta teflón 1/2"',                             'Plomería',    'Hidráulica Santa Catarina',        'pieza',  7.00,  15.00,  30,  88, 7),
     ('PLO-005', 'Manguera flexible para lavabo 40 cm',           'Plomería',    'Hidráulica Santa Catarina',        'pieza', 45.00,  79.00,   6,  14, 3),
     ('PLO-006', 'Pegamento para PVC 125 ml',                     'Plomería',    'Hidráulica Santa Catarina',        'pieza', 48.00,  85.00,   6,  17, 3),
@@ -203,9 +238,17 @@ begin
     ('JAR-006', 'Fertilizante triple 17',                        'Jardín',      'Distribuidora Ferretera Regia',    'kilo',  22.00,  38.00,  10, 28.5, 2);
 
   -- stock = 0: el stock real se escribe al final, a partir de los movimientos.
+  -- id fijo, derivado del código: el mismo producto conserva su id en cada
+  -- reinicio, así que un carrito guardado en el navegador sigue sirviendo.
+  -- Es el md5 del código con la versión (4) y la variante (8) de un UUID v4,
+  -- para que pase z.uuid(). Categorías y proveedores ya quedan con los mismos
+  -- ids: el truncate reinicia su identity y se insertan siempre en el mismo
+  -- orden.
   insert into public.productos
-    (codigo, nombre, categoria_id, proveedor_id, unidad, costo, precio, stock_minimo, creado_en)
-  select s.codigo, s.nombre, c.id, pr.id, s.unidad, s.costo, s.precio, s.stock_minimo,
+    (id, codigo, nombre, categoria_id, proveedor_id, unidad, costo, precio, stock_minimo, creado_en)
+  select overlay(overlay(md5('latuerca:producto:' || s.codigo) placing '4' from 13)
+                 placing '8' from 17)::uuid,
+         s.codigo, s.nombre, c.id, pr.id, s.unidad, s.costo, s.precio, s.stock_minimo,
          v_inicio - interval '1 hour'
   from pg_temp.semilla_productos s
   join public.categorias c on c.nombre = s.categoria
@@ -254,7 +297,7 @@ begin
     for v_k in 1 .. v_n loop
       perform setseed((hashtext(format('venta-%s-%s', v_dow, v_k)) / 2147483648.0)::float8);
 
-      v_usuario := case when random() < 0.7 then v_cajero else v_dueno end;
+      v_usuario := case when random() < 0.7 then v_turno else v_dueno end;
 
       r := random();
       v_metodo := case when r < 0.6 then 'efectivo'
@@ -324,26 +367,9 @@ begin
     select count(*) into v_n from pg_temp.semilla_tickets where dow = v_dow;
     v_quitar := case when v_semanas = 0 then 0
                      else ceil(v_n * 0.25)::int + (v_semanas - 1) / 2 end;
-    v_limite := null;  -- todos
-
     -- Horario de tienda: 08:30 a 19:00.
     v_abre  := time '08:30';
     v_rango := interval '10 hours 30 minutes';
-
-    -- Hoy: el mismo plan de día completo, cortado en la hora actual (el
-    -- "exit when" de abajo), para comparar parejo contra la semana pasada.
-    -- Antes de las 09:30 casi no hay horario transcurrido: para que "Ventas
-    -- de hoy" no salga en $0 al recargar, 3 ventas caen en las últimas horas
-    -- (hasta 3) antes de ahora.
-    if v_dia = v_hoy then
-      v_ahora := least((now() at time zone 'America/Monterrey')::time, time '19:00');
-      if v_ahora < time '09:30' then
-        v_rango := greatest(least(v_ahora - time '00:00', interval '3 hours') - interval '1 minute',
-                            interval '0');
-        v_abre  := v_ahora - v_rango - interval '1 minute';
-        v_limite := 3;
-      end if;
-    end if;
 
     for v_ts, v_usuario, v_metodo, v_ids, v_cants, v_total, v_pago in
       select (v_dia + (v_abre + t.u * v_rango)) at time zone 'America/Monterrey',
@@ -351,9 +377,17 @@ begin
       from pg_temp.semilla_tickets t
       where t.dow = v_dow and t.orden > v_quitar
       order by t.u
-      limit v_limite
     loop
-      exit when v_ts > now();  -- hoy: solo hasta la hora actual
+      -- Hoy, lo que todavía no llega a su hora queda pendiente: avanzar_demo()
+      -- lo cobra a su hora con registrar_venta (stock, movimientos y copias).
+      if v_ts > now() then
+        insert into privado.demo_ventas_pendientes
+          (clave, programada, usuario_id, metodo_pago, pago, items)
+        select gen_random_uuid(), v_ts, v_usuario, v_metodo, v_pago,
+               jsonb_agg(jsonb_build_object('producto_id', x.producto_id, 'cantidad', x.cantidad))
+        from unnest(v_ids, v_cants) x(producto_id, cantidad);
+        continue;
+      end if;
 
       insert into public.ventas
         (subtotal, total, metodo_pago, pago_recibido, cambio, usuario_id, creado_en)
@@ -408,7 +442,7 @@ begin
     where d.venta_id = v_cancelar.id;
   end if;
 
-  -- 8. Entrada inicial: stock_final + todo lo vendido --------------------------
+  -- 8. Entrada inicial: stock_final + todo lo vendido + lo pendiente de hoy ----
   insert into pg_temp.semilla_eventos
     (producto_id, creado_en, tipo, cantidad, costo, venta_id, nota, usuario_id)
   select p.id, v_inicio, 'entrada',
@@ -417,10 +451,16 @@ begin
   from public.productos p
   join pg_temp.semilla_productos s on s.codigo = p.codigo
   left join (
-    select e.producto_id, sum(-e.cantidad) as cantidad
-    from pg_temp.semilla_eventos e
-    where e.tipo = 'venta'
-    group by e.producto_id
+    select t.producto_id, sum(t.cantidad) as cantidad
+    from (
+      select e.producto_id, -e.cantidad as cantidad
+      from pg_temp.semilla_eventos e
+      where e.tipo = 'venta'
+      union all
+      select (i ->> 'producto_id')::uuid, (i ->> 'cantidad')::numeric
+      from privado.demo_ventas_pendientes d, jsonb_array_elements(d.items) i
+    ) t
+    group by t.producto_id
   ) vendido on vendido.producto_id = p.id
   where s.stock_final + coalesce(vendido.cantidad, 0) > 0;
 
@@ -448,12 +488,12 @@ begin
 end;
 $$;
 
-revoke execute on function privado.cargar_semilla(text, text)
+revoke execute on function privado.cargar_semilla(text, text, text)
   from public, anon, authenticated, service_role;
 
 -- -----------------------------------------------------------------------------
 -- Cargar. Si usaste otros correos, pásalos:
---   select privado.cargar_semilla('tu-dueno@...', 'tu-cajero@...');
+--   select privado.cargar_semilla('tu-dueno@...', 'tu-cajero@...', 'tu-turno@...');
 -- -----------------------------------------------------------------------------
 select privado.cargar_semilla();
 
@@ -466,6 +506,7 @@ select
     where estado = 'completada'
       and creado_en >= ((now() at time zone 'America/Monterrey')::date)::timestamp
                        at time zone 'America/Monterrey')        as ventas_hoy,
+  (select count(*) from privado.demo_ventas_pendientes)            as pendientes_hoy,
   (select count(*) from public.ventas where estado = 'cancelada')  as canceladas,
   (select count(*) from public.movimientos_inventario)            as movimientos,
   (select sum(total) from public.ventas where estado = 'completada') as total_vendido;
