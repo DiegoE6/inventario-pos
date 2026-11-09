@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { BrandMark } from "@/app/components/brand-mark";
 import { brandStyle } from "@/app/lib/brand";
 import { getConfiguracion } from "@/app/lib/data";
+import { rolesDemoDisponibles } from "@/app/lib/demo";
 import { safeNext } from "@/app/lib/safe-next";
+import { DemoButtons } from "./demo-buttons";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Entrar" };
@@ -14,6 +16,7 @@ const NOTICES: Record<string, string> = {
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const [config, sp] = await Promise.all([getConfiguracion(), searchParams]);
   const errorKey = typeof sp.error === "string" ? sp.error : "";
+  const rolesDemo = rolesDemoDisponibles();
 
   return (
     <div data-brand style={brandStyle(config.color_primario)} className="flex flex-1 flex-col">
@@ -26,8 +29,18 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           </div>
         </header>
 
-        <div className="rounded-[var(--radius-card)] border border-border bg-surface p-5">
-          <LoginForm notice={NOTICES[errorKey]} next={safeNext(sp.next)} />
+        <div className="flex flex-col gap-5 rounded-[var(--radius-card)] border border-border bg-surface p-5">
+          {rolesDemo.length > 0 ? (
+            <>
+              <DemoButtons roles={rolesDemo} />
+              <div className="flex items-center gap-3 text-[13px] text-muted">
+                <span aria-hidden className="h-px flex-1 bg-border" />
+                o entra con tu cuenta
+                <span aria-hidden className="h-px flex-1 bg-border" />
+              </div>
+            </>
+          ) : null}
+          <LoginForm notice={NOTICES[errorKey]} next={safeNext(sp.next)} secundario={rolesDemo.length > 0} />
         </div>
       </main>
     </div>

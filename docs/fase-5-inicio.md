@@ -171,4 +171,6 @@ Todo se lee en el servidor en paralelo. "Hoy" sale de `todayYmd()` y `startOfDay
   - Si el reinicio corre de madrugada, ese día "hoy" se queda con esas 3 ventas y ya no crece. En la tarde, la comparación contra la semana pasada saldría negativa.
   - Hay que decidir si el reinicio nocturno genera ventas de hoy o si "hoy" empieza en $0 hasta la primera venta.
 - **Stock bajo con más de 50 productos:** Inicio pide máximo 50 (por nombre) y los ordena por urgencia. Con un catálogo real grande convendría que la base los regrese ya ordenados por urgencia.
-- **Fase 9:** modo oscuro de la gráfica y revisión de animaciones.
+- **Fase 9:**
+  - Modo oscuro de la gráfica y revisión de animaciones.
+  - Fijar Node 22 en `package.json` (`"engines": { "node": "22.x" }`), subir `@types/node` a `^22` y revisar que Vercel use 22.x. Hoy local usa Node 22.17.1, pero el proyecto no fija versión.

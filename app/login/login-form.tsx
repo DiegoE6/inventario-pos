@@ -6,7 +6,8 @@ import { Button } from "@/app/components/ui/button";
 import { Field, Input } from "@/app/components/ui/field";
 import { iniciarSesion, type LoginState } from "./actions";
 
-export function LoginForm({ notice, next }: { notice?: string; next: string }) {
+/** Con el demo activo, "Entrar" va en secundario: el botón principal es el del demo. */
+export function LoginForm({ notice, next, secundario = false }: { notice?: string; next: string; secundario?: boolean }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(iniciarSesion, {});
   const error = state.error ?? (state.fieldErrors ? undefined : notice);
 
@@ -50,7 +51,14 @@ export function LoginForm({ notice, next }: { notice?: string; next: string }) {
         />
       </Field>
 
-      <Button type="submit" size="lg" className="mt-2 w-full" pending={pending} pendingLabel="Entrando…">
+      <Button
+        type="submit"
+        size="lg"
+        variant={secundario ? "secondary" : "primary"}
+        className="mt-2 w-full"
+        pending={pending}
+        pendingLabel="Entrando…"
+      >
         Entrar
       </Button>
     </form>
