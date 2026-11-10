@@ -68,13 +68,14 @@ begin
   loop
     insert into public.ventas
       (subtotal, total, metodo_pago, pago_recibido, cambio, usuario_id, creado_en,
-       estado, motivo_cancelacion, cancelada_en)
+       estado, motivo_cancelacion, cancelada_en, cancelada_por)
     values
       (r.total, r.total, 'tarjeta', r.total, 0, r.usuario,
        r.local_ts at time zone 'America/Monterrey',
        r.estado,
        case when r.estado = 'cancelada' then 'Prueba' end,
-       case when r.estado = 'cancelada' then (r.local_ts at time zone 'America/Monterrey') + interval '5 minutes' end)
+       case when r.estado = 'cancelada' then (r.local_ts at time zone 'America/Monterrey') + interval '5 minutes' end,
+       case when r.estado = 'cancelada' then v_dueno end)
     returning id into v_id;
 
     insert into public.venta_detalle

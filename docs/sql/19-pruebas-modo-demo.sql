@@ -275,7 +275,8 @@ begin
   insert into public.categorias (nombre) values ('Basura');
   update public.proveedores set nombre = nombre || ' (roto)';
   update public.perfiles set activo = false, nombre = 'Roto' where id = v_cajero;
-  update public.ventas set estado = 'cancelada', motivo_cancelacion = 'prueba', cancelada_en = now()
+  update public.ventas set estado = 'cancelada', motivo_cancelacion = 'prueba', cancelada_en = now(),
+                           cancelada_por = v_dueno
   where estado = 'completada';
 
   perform privado.reset_demo();

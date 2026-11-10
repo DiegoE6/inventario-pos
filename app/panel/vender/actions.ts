@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import type { TicketData } from "@/app/components/ticket";
 import { verifySession } from "@/app/lib/auth";
 import type { PosProduct } from "@/app/lib/cart";
 import { getConfiguracion } from "@/app/lib/data";
@@ -37,17 +38,8 @@ const cobroSchema = z.object({
 
 export type CobroInput = z.input<typeof cobroSchema>;
 
-export type Ticket = {
+export type Ticket = TicketData & {
   ventaId: string;
-  folio: number;
-  fecha: string;
-  metodo: "efectivo" | "tarjeta" | "transferencia";
-  total: number;
-  recibido: number;
-  cambio: number;
-  atendio: string;
-  items: { nombre: string; unidad: Unidad; cantidad: number; precio: number; importe: number }[];
-  negocio: { nombre: string; direccion: string | null; telefono: string | null };
   /** La clave ya tenía una venta registrada (reintento): el ticket es de esa venta. */
   repetida: boolean;
 };

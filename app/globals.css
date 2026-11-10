@@ -56,6 +56,39 @@ html {
 }
 
 /*
+ * Diálogos ocasionales (cancelar venta, reimprimir): entrada corta desde 0.96
+ * con ease-out, centrada (un modal no sale de su botón). Cierre instantáneo.
+ * El ticket del cobro NO la usa: se abre en cada venta y no debe frenar.
+ */
+dialog.app-dialog[open] {
+  transition:
+    opacity 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+dialog.app-dialog[open]::backdrop {
+  transition: opacity 200ms var(--ease-out);
+}
+
+@starting-style {
+  dialog.app-dialog[open] {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  dialog.app-dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.app-dialog[open],
+  dialog.app-dialog[open]::backdrop {
+    transition: none;
+  }
+}
+
+/*
  * Impresión del ticket (impresora térmica de 58 u 80 mm). Solo se imprime el
  * ticket; el ancho real lo pone el papel configurado en el driver. Monoespaciada
  * y en negro puro para que se lea bien en papel térmico.

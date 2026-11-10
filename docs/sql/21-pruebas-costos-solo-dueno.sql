@@ -67,7 +67,10 @@ begin
                 ~ '^(SETOF )?(public\.)?(productos|movimientos_inventario|venta_detalle)$')
         and p.proname not in ('mas_vendidos', 'resumen_ventas', 'ventas_por_dia', 'valor_inventario',
                               'costos_productos', 'crear_producto', 'registrar_movimiento',
-                              'registrar_ajuste')),
+                              'registrar_ajuste',
+                              -- Reportes (24): solo dueño.
+                              'reporte_resumen', 'reporte_ventas_por_periodo',
+                              'reporte_por_categoria', 'reporte_sin_movimiento')),
     '1. Hay una función nueva que devuelve costos: revísala y agrégala a esta lista';
   -- f) Esas funciones son SECURITY DEFINER (si fueran INVOKER, no podrían
   --    leer el costo ni para el dueño).
@@ -75,7 +78,8 @@ begin
       select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public' and not p.prosecdef
         and p.proname in ('mas_vendidos', 'resumen_ventas', 'ventas_por_dia', 'valor_inventario',
-                          'costos_productos')),
+                          'costos_productos', 'reporte_resumen', 'reporte_ventas_por_periodo',
+                          'reporte_por_categoria', 'reporte_sin_movimiento')),
     '1. Una función de costos no es SECURITY DEFINER';
   -- g) Realtime: ninguna tabla con costos está publicada.
   assert not exists (

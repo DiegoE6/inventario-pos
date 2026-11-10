@@ -20,7 +20,7 @@ export function Section({
     <section
       id={id}
       aria-labelledby={id ? `${id}-titulo` : undefined}
-      className="flex scroll-mt-6 flex-col gap-4 rounded-[var(--radius-card)] border border-border bg-surface p-4"
+      className="flex min-w-0 scroll-mt-6 flex-col gap-4 rounded-[var(--radius-card)] border border-border bg-surface p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id={id ? `${id}-titulo` : undefined} className="text-lg font-semibold">
