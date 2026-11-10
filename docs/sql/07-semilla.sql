@@ -433,11 +433,25 @@ begin
   limit 1;
 
   if found then
-    update public.ventas
-    set estado = 'cancelada',
-        motivo_cancelacion = 'El cliente se equivocó de medida',
-        cancelada_en = v_cancelar.creado_en + interval '20 minutes'
-    where id = v_cancelar.id;
+    -- cancelada_por existe desde 24, que exige llenarlo en toda cancelada. Va
+    -- con SQL dinámico para que esta función sirva con o sin esa columna:
+    -- 07 se corre antes que 24 (24 revisa que esta versión esté instalada).
+    if exists (select 1 from information_schema.columns
+               where table_schema = 'public' and table_name = 'ventas'
+                 and column_name = 'cancelada_por') then
+      execute 'update public.ventas
+               set estado = ''cancelada'', motivo_cancelacion = $1,
+                   cancelada_en = $2, cancelada_por = $3
+               where id = $4'
+        using 'El cliente se equivocó de medida',
+              v_cancelar.creado_en + interval '20 minutes', v_dueno, v_cancelar.id;
+    else
+      update public.ventas
+      set estado = 'cancelada',
+          motivo_cancelacion = 'El cliente se equivocó de medida',
+          cancelada_en = v_cancelar.creado_en + interval '20 minutes'
+      where id = v_cancelar.id;
+    end if;
 
     insert into pg_temp.semilla_eventos
       (producto_id, creado_en, tipo, cantidad, costo, venta_id, nota, usuario_id)
