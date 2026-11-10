@@ -64,12 +64,31 @@ export async function getProducto(id: string): Promise<Producto | null> {
   const { data, error } = await supabase
     .from("productos")
     .select(
-      "id, codigo, nombre, descripcion, categoria_id, proveedor_id, unidad, costo, precio, stock, stock_minimo, activo"
+      "id, codigo, nombre, descripcion, categoria_id, proveedor_id, unidad, precio, stock, stock_minimo, activo"
     )
     .eq("id", id)
     .maybeSingle<Producto>();
   if (error) console.error("[producto]", error);
   return data ?? null;
+}
+
+/**
+ * Costo de un producto, solo para el dueño. La columna productos.costo no se
+ * puede leer desde la API (ni el dueño): sale de costos_productos(), que
+ * valida el rol en la BD. null si no se pudo leer (o no es dueño).
+ */
+export async function getCostoProducto(id: string): Promise<number | null> {
+  if (!isUuid(id)) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .rpc("costos_productos", { p_ids: [id] })
+    .maybeSingle<{ id: string; costo: number | string }>();
+  if (error) {
+    console.error("[costos_productos]", error);
+    return null;
+  }
+  const fila = data;
+  return fila ? Number(fila.costo) : null;
 }
 
 // -----------------------------------------------------------------------------

@@ -329,6 +329,19 @@ begin
          or p.stock <> coalesce((select sum(m.cantidad) from public.movimientos_inventario m
                                  where m.producto_id = p.id), 0)),
     '7. El stock no cuadra con los movimientos';
+  -- Los 7 de stock bajo lo están desde que se carga, a cualquier hora, aunque
+  -- les queden ventas pendientes hoy; y alcanza el stock para cobrarlas todas.
+  assert (select count(*) from public.v_stock_bajo) = 7,
+    format('7. Recién cargada la semilla hay %s productos en stock bajo (deben ser 7)',
+           (select count(*) from public.v_stock_bajo));
+  assert not exists (
+      select 1
+      from (select (i ->> 'producto_id')::uuid as producto_id, sum((i ->> 'cantidad')::numeric) as cantidad
+            from privado.demo_ventas_pendientes d, jsonb_array_elements(d.items) i
+            group by 1) pend
+      join public.productos p on p.id = pend.producto_id
+      where pend.cantidad > p.stock),
+    '7. Hay ventas pendientes de hoy que no alcanzan stock';
   raise notice '✔ 7. reset_demo restaura Auth, MFA, configuración, catálogos, productos, ventas y perfiles';
 end $$;
 

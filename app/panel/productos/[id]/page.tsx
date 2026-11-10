@@ -7,7 +7,7 @@ import { PageHeader } from "@/app/components/page-header";
 import { buttonClasses } from "@/app/components/ui/button";
 import { StockBadge } from "@/app/components/ui/stock-badge";
 import { verifySession } from "@/app/lib/auth";
-import { getCategorias, getProducto, getProveedores } from "@/app/lib/data";
+import { getCategorias, getCostoProducto, getProducto, getProveedores } from "@/app/lib/data";
 import { movimientosDeProducto } from "@/app/lib/inventario";
 import { MovimientoList } from "../../inventario/_components/movimiento-list";
 import { formatMoney, formatQuantity } from "@/app/lib/format";
@@ -26,7 +26,12 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
   if (!producto) notFound();
 
   const back = { href: "/panel/productos", label: "Productos" };
-  const [categorias, proveedores] = await Promise.all([getCategorias(), getProveedores()]);
+  // El costo solo se pide para el dueño (la BD se lo niega al cajero).
+  const [categorias, proveedores, costo] = await Promise.all([
+    getCategorias(),
+    getProveedores(),
+    session.rol === "dueno" ? getCostoProducto(producto.id) : Promise.resolve(null),
+  ]);
   const categoria = categorias.find((c) => c.id === producto.categoria_id)?.nombre ?? null;
 
   const stockCard = (
@@ -92,27 +97,33 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
           Conteo
         </Link>
       </div>
-      <ProductForm
-        key={producto.id}
-        mode="editar"
-        action={actualizarProducto.bind(null, producto.id)}
-        initial={{
-          codigo: producto.codigo,
-          nombre: producto.nombre,
-          descripcion: producto.descripcion ?? "",
-          categoria_id: producto.categoria_id === null ? "" : String(producto.categoria_id),
-          proveedor_id: producto.proveedor_id === null ? "" : String(producto.proveedor_id),
-          unidad: producto.unidad,
-          costo: Number(producto.costo).toFixed(2),
-          precio: Number(producto.precio).toFixed(2),
-          stock_minimo: String(Number(producto.stock_minimo)),
-          stock_inicial: "0",
-          activo: producto.activo,
-        }}
-        // Activas, más la que ya tiene asignada aunque esté desactivada.
-        categorias={categorias.filter((c) => c.activo || c.id === producto.categoria_id)}
-        proveedores={proveedores.filter((p) => p.activo || p.id === producto.proveedor_id)}
-      />
+      {costo === null ? (
+        // Sin el costo no se muestra el formulario: guardar lo pide y se
+        // sobrescribiría con lo que alguien escriba sin ver el actual.
+        <Notice tone="danger">No se pudo cargar el costo del producto. Recarga la página.</Notice>
+      ) : (
+        <ProductForm
+          key={producto.id}
+          mode="editar"
+          action={actualizarProducto.bind(null, producto.id)}
+          initial={{
+            codigo: producto.codigo,
+            nombre: producto.nombre,
+            descripcion: producto.descripcion ?? "",
+            categoria_id: producto.categoria_id === null ? "" : String(producto.categoria_id),
+            proveedor_id: producto.proveedor_id === null ? "" : String(producto.proveedor_id),
+            unidad: producto.unidad,
+            costo: costo.toFixed(2),
+            precio: Number(producto.precio).toFixed(2),
+            stock_minimo: String(Number(producto.stock_minimo)),
+            stock_inicial: "0",
+            activo: producto.activo,
+          }}
+          // Activas, más la que ya tiene asignada aunque esté desactivada.
+          categorias={categorias.filter((c) => c.activo || c.id === producto.categoria_id)}
+          proveedores={proveedores.filter((p) => p.activo || p.id === producto.proveedor_id)}
+        />
+      )}
       <section className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-lg font-semibold">Historial</h2>
