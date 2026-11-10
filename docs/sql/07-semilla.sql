@@ -148,6 +148,11 @@ begin
   if to_regclass('privado.contador_folios') is not null then
     update privado.contador_folios set ultimo = 0 where id = 1;
   end if;
+  -- Importaciones (26): sus claves se borran con los productos importados.
+  -- Si 26 todavía no se corrió, la tabla no existe y no hay nada que borrar.
+  if to_regclass('privado.importaciones') is not null then
+    truncate table privado.importaciones;
+  end if;
 
   perform setseed(0.42);
   v_inicio := ((v_hoy - 31) + time '08:00') at time zone 'America/Monterrey';

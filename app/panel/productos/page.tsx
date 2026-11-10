@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PackageSearch, Plus } from "lucide-react";
+import { Download, PackageSearch, Plus, Upload } from "lucide-react";
 import { PageHeader } from "@/app/components/page-header";
 import { ProductCard } from "@/app/components/product-card";
 import { buttonClasses } from "@/app/components/ui/button";
@@ -29,16 +29,44 @@ export default async function ProductosPage({ searchParams }: PageProps<"/panel/
   const desde = (query.pagina - 1) * PAGE_SIZE + 1;
   const hasta = desde + productos.length - 1;
 
+  // Exportar con la misma búsqueda y filtros de la lista.
+  const exportParams = new URLSearchParams();
+  if (query.q) exportParams.set("q", query.q);
+  if (query.categoria !== null) exportParams.set("categoria", String(query.categoria));
+  if (query.inactivos) exportParams.set("inactivos", "1");
+  const exportHref = `/panel/productos/exportar${exportParams.size ? `?${exportParams}` : ""}`;
+
   return (
     <>
       <PageHeader
         title="Productos"
         actions={
           esDueno ? (
-            <Link href="/panel/productos/nuevo" className={buttonClasses()}>
-              <Plus aria-hidden className="size-[18px]" />
-              Nuevo
-            </Link>
+            <>
+              <a
+                href={exportHref}
+                download
+                className={buttonClasses({ variant: "secondary", className: "px-3" })}
+                aria-label="Exportar a Excel"
+                title="Exportar a Excel"
+              >
+                <Download aria-hidden className="size-[18px]" />
+                <span className="hidden sm:inline">Exportar</span>
+              </a>
+              <Link
+                href="/panel/productos/importar"
+                className={buttonClasses({ variant: "secondary", className: "px-3" })}
+                aria-label="Importar desde Excel"
+                title="Importar desde Excel"
+              >
+                <Upload aria-hidden className="size-[18px]" />
+                <span className="hidden sm:inline">Importar</span>
+              </Link>
+              <Link href="/panel/productos/nuevo" className={buttonClasses()}>
+                <Plus aria-hidden className="size-[18px]" />
+                Nuevo
+              </Link>
+            </>
           ) : undefined
         }
       />
