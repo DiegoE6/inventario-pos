@@ -234,12 +234,16 @@ export type SinMovimiento = {
 export const SIN_MOVIMIENTO_LIMITE = 50;
 
 /** Productos con stock que no se vendieron en el rango, del de más dinero detenido al de menos. */
-export async function getSinMovimiento(desde: string, hasta: string): Promise<SinMovimiento[] | null> {
+export async function getSinMovimiento(
+  desde: string,
+  hasta: string,
+  limite = SIN_MOVIMIENTO_LIMITE
+): Promise<SinMovimiento[] | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("reporte_sin_movimiento", {
     p_desde: desde,
     p_hasta: hasta,
-    p_limite: SIN_MOVIMIENTO_LIMITE,
+    p_limite: limite,
   });
   if (error || !data) {
     console.error("[reporte_sin_movimiento]", error);
@@ -265,5 +269,48 @@ export async function getSinMovimiento(desde: string, hasta: string): Promise<Si
     stock: Number(r.stock),
     valorCents: cents(r.valor_detenido),
     ultimaVenta: r.ultima_venta,
+  }));
+}
+
+export type MasVendidoExport = {
+  codigo: string;
+  nombre: string;
+  unidad: Unidad;
+  cantidad: number;
+  importeCents: number;
+  costoCents: number;
+  gananciaCents: number;
+};
+
+/** mas_vendidos completo (para Excel): al dueño le regresa costo y ganancia. */
+export async function getMasVendidosExport(
+  desde: string,
+  hasta: string,
+  limite = 100
+): Promise<MasVendidoExport[] | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("mas_vendidos", { p_desde: desde, p_hasta: hasta, p_limite: limite });
+  if (error || !data) {
+    console.error("[mas_vendidos export]", error);
+    return null;
+  }
+  return (
+    data as {
+      codigo: string;
+      nombre: string;
+      unidad: Unidad;
+      cantidad: number | string;
+      importe: number | string;
+      costo: number | string | null;
+      ganancia: number | string | null;
+    }[]
+  ).map((m) => ({
+    codigo: m.codigo,
+    nombre: m.nombre,
+    unidad: m.unidad,
+    cantidad: Number(m.cantidad),
+    importeCents: cents(m.importe),
+    costoCents: cents(m.costo),
+    gananciaCents: cents(m.ganancia),
   }));
 }

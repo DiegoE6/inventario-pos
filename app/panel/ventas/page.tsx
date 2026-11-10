@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Download } from "lucide-react";
 import { Notice } from "@/app/components/notice";
 import { PageHeader } from "@/app/components/page-header";
 import { Pagination } from "@/app/components/pagination";
+import { buttonClasses } from "@/app/components/ui/button";
 import { verifySession } from "@/app/lib/auth";
 import { todayYmd } from "@/app/lib/tz";
 import {
@@ -45,6 +47,19 @@ export default async function VentasPage({ searchParams }: PageProps<"/panel/ven
       <PageHeader
         title="Ventas"
         description={session.rol === "dueno" ? "Todas las ventas del negocio" : "Tus ventas"}
+        actions={
+          session.rol === "dueno" ? (
+            // Exporta lo mismo que muestra la lista (fechas, estado y método), todas las páginas.
+            <a
+              href={href(query, 1).replace("/panel/ventas", "/panel/ventas/exportar")}
+              download
+              className={buttonClasses({ variant: "secondary" })}
+            >
+              <Download aria-hidden className="size-[18px]" />
+              Exportar a Excel
+            </a>
+          ) : undefined
+        }
       />
 
       <VentasFilters

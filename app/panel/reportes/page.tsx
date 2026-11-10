@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Download } from "lucide-react";
 import { Notice } from "@/app/components/notice";
 import { PageHeader } from "@/app/components/page-header";
+import { buttonClasses } from "@/app/components/ui/button";
 import { requireDueno } from "@/app/lib/auth";
 import { formatCents } from "@/app/lib/format";
 import { getMasVendidos } from "@/app/lib/inicio";
@@ -93,7 +95,19 @@ export default async function ReportesPage({ searchParams }: PageProps<"/panel/r
 
   return (
     <>
-      <PageHeader title="Reportes" />
+      <PageHeader
+        title="Reportes"
+        actions={
+          <a
+            href={`/panel/reportes/exportar?desde=${desde}&hasta=${hasta}`}
+            download
+            className={buttonClasses({ variant: "secondary" })}
+          >
+            <Download aria-hidden className="size-[18px]" />
+            Exportar a Excel
+          </a>
+        }
+      />
       {picker(textoRango)}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
