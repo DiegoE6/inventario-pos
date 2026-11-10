@@ -26,7 +26,8 @@ export type ProductoOperacion = {
   nombre: string;
   unidad: Unidad;
   stock: number;
-  costo: number;
+  /** Último costo (solo en entradas); null si no se pudo leer. */
+  costo: number | null;
   activo: boolean;
 };
 
@@ -120,7 +121,8 @@ function Formulario({
   const u = UNIDAD_CORTA[producto.unidad];
   const [clave, setClave] = useState(uuidv4);
   const [cantidad, setCantidad] = useState("");
-  const [costo, setCosto] = useState(producto.costo.toFixed(2));
+  // Sin último costo, el campo queda vacío: vacío no cambia el costo del producto.
+  const [costo, setCosto] = useState(producto.costo === null ? "" : producto.costo.toFixed(2));
   const [nota, setNota] = useState("");
   // Stock contra el que se calculó la diferencia del conteo. Se fija cuando la
   // BD responde que cambió; si no, es el que trae la página.
@@ -320,7 +322,11 @@ function Formulario({
             <Field
               id="entrada-costo"
               label={`Costo por ${u}`}
-              hint={`Último costo: ${formatMoney(producto.costo)}. Se guarda como el costo del producto.`}
+              hint={
+                producto.costo === null
+                  ? "No se pudo leer el último costo. Si lo dejas vacío, el costo del producto no cambia."
+                  : `Último costo: ${formatMoney(producto.costo)}. Se guarda como el costo del producto.`
+              }
               error={costoInvalido ? "Usa un monto como 12.50." : fieldErrors.costo}
             >
               <Input

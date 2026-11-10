@@ -40,7 +40,8 @@
 -- stock_final + todo lo vendido + lo pendiente de hoy. Al cargar, el stock
 -- trae lo que falta vender hoy y baja a stock_final conforme se cobran los
 -- pendientes. Los productos de la venta cancelada terminan con stock_final
--- + lo que se regresó.
+-- + lo que se regresó. Los 7 de stock bajo amanecen ya en su mínimo o abajo,
+-- y si hoy se venden cierran por debajo de stock_final (ver paso 8).
 --
 -- Se usa setseed: el mismo día genera los mismos datos.
 --
@@ -142,6 +143,11 @@ begin
     public.proveedores
   restart identity;
   truncate table privado.demo_ventas_pendientes;
+  -- Folios desde 1 (22): el contador vuelve a 0. Si 22 todavía no se corrió,
+  -- folio es identity y el truncate de arriba ya lo reinicia.
+  if to_regclass('privado.contador_folios') is not null then
+    update privado.contador_folios set ultimo = 0 where id = 1;
+  end if;
 
   perform setseed(0.42);
   v_inicio := ((v_hoy - 31) + time '08:00') at time zone 'America/Monterrey';
@@ -442,27 +448,42 @@ begin
     where d.venta_id = v_cancelar.id;
   end if;
 
-  -- 8. Entrada inicial: stock_final + todo lo vendido + lo pendiente de hoy ----
+  -- 8. Entrada inicial: lo vendido + el stock al cargar ------------------------
+  -- Stock al cargar = stock_final + lo pendiente de hoy. Excepción: los de
+  -- stock bajo (stock_final <= stock_minimo) amanecen en su mínimo como máximo
+  -- (o en lo pendiente, si es más, para que avanzar_demo pueda cobrarlo). Si no,
+  -- un ticket pendiente grande los sube del mínimo hasta que se cobra: los
+  -- martes, PIN-002 (6 + 4 = 10 > 8) no salía en stock bajo hasta las 11:19.
+  -- No depende de qué tickets salgan con setseed, que cambia entre versiones de
+  -- Postgres.
   insert into pg_temp.semilla_eventos
     (producto_id, creado_en, tipo, cantidad, costo, venta_id, nota, usuario_id)
   select p.id, v_inicio, 'entrada',
-         s.stock_final + coalesce(vendido.cantidad, 0),
+         x.vendido + x.al_cargar,
          p.costo, null, 'Inventario inicial', v_dueno
   from public.productos p
   join pg_temp.semilla_productos s on s.codigo = p.codigo
   left join (
-    select t.producto_id, sum(t.cantidad) as cantidad
+    select t.producto_id, sum(t.vendido) as vendido, sum(t.pendiente) as pendiente
     from (
-      select e.producto_id, -e.cantidad as cantidad
+      select e.producto_id, -e.cantidad as vendido, 0 as pendiente
       from pg_temp.semilla_eventos e
       where e.tipo = 'venta'
       union all
-      select (i ->> 'producto_id')::uuid, (i ->> 'cantidad')::numeric
+      select (i ->> 'producto_id')::uuid, 0, (i ->> 'cantidad')::numeric
       from privado.demo_ventas_pendientes d, jsonb_array_elements(d.items) i
     ) t
     group by t.producto_id
-  ) vendido on vendido.producto_id = p.id
-  where s.stock_final + coalesce(vendido.cantidad, 0) > 0;
+  ) v on v.producto_id = p.id
+  cross join lateral (
+    select coalesce(v.vendido, 0) as vendido,
+           case when s.stock_final <= s.stock_minimo
+                then least(s.stock_final + coalesce(v.pendiente, 0),
+                           greatest(s.stock_minimo, coalesce(v.pendiente, 0)))
+                else s.stock_final + coalesce(v.pendiente, 0)
+           end as al_cargar
+  ) x
+  where x.vendido + x.al_cargar > 0;
 
   -- 9. Eventos -> movimientos con stock anterior/nuevo, en orden cronológico ---
   insert into public.movimientos_inventario

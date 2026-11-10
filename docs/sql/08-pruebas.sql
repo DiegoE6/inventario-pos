@@ -199,11 +199,13 @@ begin
   assert (select count(*) from public.movimientos_inventario) = 0,
     '7. El cajero ve movimientos de inventario';
 
-  -- Vistas y función con security_invoker respetan RLS.
-  select coalesce(sum(num_ventas), 0) into v_vista from public.v_ventas_por_dia;
+  -- Las funciones de resumen solo le cuentan sus ventas. (La vista
+  -- v_ventas_por_dia se quitó en 20; la reemplaza resumen_ventas/ventas_por_dia.)
+  select coalesce(num_ventas, 0) into v_vista
+  from public.resumen_ventas(now() - interval '40 days', now() + interval '1 hour');
   assert v_vista = v_mias,
-    format('7. v_ventas_por_dia del cajero suma %s ventas, esperado %s', v_vista, v_mias);
-  assert v_vista < v_total, '7. La vista del cajero incluye ventas del dueño';
+    format('7. resumen_ventas del cajero cuenta %s ventas, esperado %s', v_vista, v_mias);
+  assert v_vista < v_total, '7. resumen_ventas del cajero incluye ventas del dueño';
   assert (select coalesce(sum(importe), 0) from public.mas_vendidos(current_date - 40, current_date + 1, 100))
        = (select coalesce(sum(d.importe), 0) from public.venta_detalle d
           join public.ventas v on v.id = d.venta_id where v.estado = 'completada'),
@@ -261,7 +263,7 @@ set local role authenticated;
 do $$
 declare
   v_mov public.movimientos_inventario;
-  v_det public.venta_detalle;
+  v_det record;
 begin
   select * into v_mov from public.movimientos_inventario
   where venta_id = current_setting('pruebas.venta')::uuid;
@@ -269,11 +271,13 @@ begin
          and v_mov.stock_nuevo = v_mov.stock_anterior - 2,
     '9. El movimiento de la venta es incorrecto';
 
-  select * into v_det from public.venta_detalle
+  -- Sin costo_unitario: desde 20 nadie de la API lo lee directo (se revisa
+  -- como postgres en 9b).
+  select precio_unitario, nombre_producto, importe into v_det from public.venta_detalle
   where venta_id = current_setting('pruebas.venta')::uuid;
-  assert v_det.precio_unitario = 115 and v_det.costo_unitario = 65
+  assert v_det.precio_unitario = 115
          and v_det.nombre_producto = 'Flexómetro 5 m' and v_det.importe = 230,
-    '9. El detalle no copió precio/costo/nombre';
+    '9. El detalle no copió precio/nombre';
   raise notice '✔ 9. Movimiento y detalle de la venta correctos';
 end $$;
 
@@ -315,7 +319,8 @@ begin
 
   v_mov := public.registrar_movimiento(v_prod, 'entrada', 10, 66.50, 'Compra de prueba');
   assert v_mov.cantidad = 10 and v_mov.stock_nuevo = v_antes + 10, '11. Entrada incorrecta';
-  assert (select costo from public.productos where id = v_prod) = 66.50,
+  -- El dueño lee el costo con costos_productos (20), no de la columna.
+  assert (select c.costo from public.costos_productos(array[v_prod]) c) = 66.50,
     '11. La entrada no actualizó el costo';
 
   begin
@@ -368,6 +373,15 @@ end $$;
 
 reset role;
 
+-- 9b. (como postgres) El detalle de la venta de la prueba 1 copió el costo.
+do $$
+begin
+  assert (select costo_unitario from public.venta_detalle
+          where venta_id = current_setting('pruebas.venta')::uuid) = 65,
+    '9b. El detalle no copió el costo';
+  raise notice '✔ 9b. El detalle copió el costo';
+end $$;
+
 -- =============================================================================
 -- Como ANON (sin sesión)
 -- =============================================================================
@@ -398,7 +412,7 @@ begin
     'select count(*) from public.categorias',
     'select count(*) from public.proveedores',
     'select count(*) from public.v_stock_bajo',
-    'select count(*) from public.v_ventas_por_dia'
+    'select * from public.costos_productos(array[gen_random_uuid()])'
   ] loop
     -- Solo vale "permiso denegado" (42501). Cualquier otro error significa
     -- que sí entró (por ejemplo, la función lo rechazó por dentro).

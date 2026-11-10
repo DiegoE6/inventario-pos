@@ -50,7 +50,8 @@ export type Producto = {
   categoria_id: number | null;
   proveedor_id: number | null;
   unidad: Unidad;
-  costo: number;
+  // Sin costo: desde 20-costos-solo-dueno.sql nadie lo lee de la tabla.
+  // El dueño lo pide con getCostoProducto (costos_productos).
   precio: number;
   stock: number;
   stock_minimo: number;

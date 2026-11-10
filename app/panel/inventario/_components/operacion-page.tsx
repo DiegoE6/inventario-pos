@@ -1,6 +1,6 @@
 import { PageHeader } from "@/app/components/page-header";
 import { requireDueno } from "@/app/lib/auth";
-import { getProducto } from "@/app/lib/data";
+import { getCostoProducto, getProducto } from "@/app/lib/data";
 import { movimientosDeProducto } from "@/app/lib/inventario";
 import { MovimientoList } from "./movimiento-list";
 import { OperacionForm, type Operacion } from "./operacion-form";
@@ -27,7 +27,13 @@ export async function OperacionPage({
   const sp = await searchParams;
   const id = typeof sp.producto === "string" ? sp.producto : "";
   const producto = id ? await getProducto(id) : null;
-  const recientes = producto ? await movimientosDeProducto(producto.id, 5) : [];
+  // El costo (para prellenar la entrada) sale de costos_productos, solo dueño.
+  const [recientes, costo] = producto
+    ? await Promise.all([
+        movimientosDeProducto(producto.id, 5),
+        operacion === "entrada" ? getCostoProducto(producto.id) : Promise.resolve(null),
+      ])
+    : [[], null];
 
   return (
     <>
@@ -42,7 +48,7 @@ export async function OperacionPage({
                 nombre: producto.nombre,
                 unidad: producto.unidad,
                 stock: Number(producto.stock),
-                costo: Number(producto.costo),
+                costo,
                 activo: producto.activo,
               }
             : null

@@ -97,9 +97,14 @@ select
                           at time zone 'America/Monterrey')
   ), true),
   set_config('pruebas.esperado_ganancia_30d', (
-    select coalesce(sum(g.ganancia), 0)::text
-    from public.v_ventas_por_dia g
-    where g.dia >= (now() at time zone 'America/Monterrey')::date - 29
+    -- Desde las tablas (la vista v_ventas_por_dia se quitó en 20).
+    select coalesce(sum(v.total - c.costo), 0)::text
+    from public.ventas v
+    join (select d.venta_id, round(sum(d.cantidad * d.costo_unitario), 2) as costo
+          from public.venta_detalle d group by d.venta_id) c on c.venta_id = v.id
+    where v.estado = 'completada'
+      and v.creado_en >= (((now() at time zone 'America/Monterrey')::date - 29)::timestamp
+                          at time zone 'America/Monterrey')
   ), true),
   set_config('pruebas.esperado_cajero_30d', (
     select coalesce(sum(v.total), 0)::text
