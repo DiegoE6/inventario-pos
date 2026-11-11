@@ -55,7 +55,7 @@ export function ProductSearchInput({
               limpiar();
             }
           }}
-          className="h-12 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-11 pr-11 text-base text-foreground placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-search-cancel-button]:hidden"
+          className="h-12 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-11 pr-11 text-base text-foreground placeholder:text-muted/70 focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-search-cancel-button]:hidden"
         />
         <span className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
           {loading ? (

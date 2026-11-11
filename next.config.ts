@@ -6,9 +6,10 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "172.*.*.*"],
   experimental: {
     serverActions: {
-      // Importar productos: el archivo se limita a 1 MB en el servidor
-      // (app/lib/excel/leer.ts); el resto es margen para el formulario.
-      bodySizeLimit: "2mb",
+      // Importar productos: el archivo se limita a 1 MB (app/lib/excel/leer.ts).
+      // Logo: 3 MB (app/lib/logo.ts). El resto es margen para el formulario,
+      // y queda debajo del límite de 4.5 MB de Vercel para el cuerpo.
+      bodySizeLimit: "4mb",
     },
   },
 };

@@ -1,6 +1,7 @@
 -- =============================================================================
 -- 19-pruebas-modo-demo.sql — Reinicio, ventas automáticas y protección del demo
--- Requiere: 01 a 18 (con la semilla cargada).
+-- Requiere: 01 a 18 (con la semilla cargada) y, para la prueba 11
+-- (restauración de la marca), 28 y después 18 otra vez.
 --
 -- Todo dentro de BEGIN … ROLLBACK: no deja cambios (tampoco los reinicios de
 -- las pruebas 7 y 9, que recargan la semilla dentro de la transacción).
@@ -462,4 +463,58 @@ end $$;
 
 reset role;
 select set_config('request.jwt.claims', '', true);
+
+-- -----------------------------------------------------------------------------
+-- 11. Marca del negocio (28): se restaura sola 30 minutos después del último
+-- cambio, desde avanzar_demo(). A los 29 minutos no; a los 31 sí.
+-- -----------------------------------------------------------------------------
+do $$
+declare
+  o record;
+  c public.configuracion_negocio;
+begin
+  if to_regprocedure('privado.restaurar_marca_vencida(timestamp with time zone)') is null then
+    raise exception '11. Falta 28-roles-y-marca.sql (restauración de la marca).';
+  end if;
+  assert pg_get_functiondef('privado.avanzar_demo()'::regprocedure) like '%restaurar_marca_vencida%',
+    '11. avanzar_demo no revisa la marca: vuelve a correr 18 después de 28';
+  select * into o from privado.marca_original();
+
+  -- Un prospecto cambia la marca ahora.
+  update public.configuracion_negocio
+  set nombre = 'Abarrotes Prueba', color_primario = '#1e3a8a',
+      logo_url = '/storage/v1/object/public/marca/logo?v=123'
+  where id = 1;
+
+  -- Recién cambiada: el job de cada minuto no la toca.
+  perform privado.avanzar_demo();
+  select * into c from public.configuracion_negocio where id = 1;
+  assert c.nombre = 'Abarrotes Prueba', '11. avanzar_demo restauró una marca recién cambiada';
+
+  -- A los 29 minutos todavía no; a los 31 sí.
+  assert not privado.restaurar_marca_vencida(now() + interval '29 minutes'), '11. Restauró a los 29 minutos';
+  select * into c from public.configuracion_negocio where id = 1;
+  assert c.nombre = 'Abarrotes Prueba' and c.color_primario = '#1e3a8a', '11. Cambió algo a los 29 minutos';
+
+  assert privado.restaurar_marca_vencida(now() + interval '31 minutes'), '11. No restauró a los 31 minutos';
+  select * into c from public.configuracion_negocio where id = 1;
+  assert (c.nombre, c.giro, c.logo_url, c.color_primario, c.telefono, c.direccion)
+         is not distinct from (o.nombre, o.giro, o.logo_url, o.color_primario, o.telefono, o.direccion),
+    '11. La configuración no quedó como la original';
+
+  -- Ya original: no hay nada que restaurar.
+  assert not privado.restaurar_marca_vencida(now() + interval '2 hours'), '11. Restauró algo que ya era original';
+
+  -- Por el camino real: un cambio de hace 31 minutos lo restaura avanzar_demo().
+  alter table public.configuracion_negocio disable trigger tg_actualizado_en;
+  update public.configuracion_negocio
+  set nombre = 'Cambio viejo', actualizado_en = now() - interval '31 minutes'
+  where id = 1;
+  alter table public.configuracion_negocio enable trigger tg_actualizado_en;
+  perform privado.avanzar_demo();
+  assert (select nombre from public.configuracion_negocio where id = 1) = o.nombre,
+    '11. avanzar_demo no restauró un cambio de hace 31 minutos';
+  raise notice '✔ 11. Marca: a los 29 min no se restaura, a los 31 sí (también desde avanzar_demo)';
+end $$;
+
 rollback;

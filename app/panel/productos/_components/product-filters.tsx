@@ -75,7 +75,7 @@ export function ProductFilters({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           maxLength={100}
-          className="h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-10 pr-10 text-base text-foreground placeholder:text-muted/70 transition-[border-color,box-shadow] duration-150 ease-out focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-search-cancel-button]:hidden"
+          className="h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-10 pr-10 text-base text-foreground placeholder:text-muted/70 transition-[border-color,box-shadow] duration-150 ease-out focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20 [&::-webkit-search-cancel-button]:hidden"
         />
         <span className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
           {pending ? (
@@ -124,7 +124,7 @@ export function ProductFilters({
               value="1"
               checked={current.inactivos}
               onChange={(e) => navigate({ inactivos: e.target.checked })}
-              className="size-5 rounded accent-[var(--color-primary)]"
+              className="size-5 rounded accent-[var(--color-primary-ink)]"
             />
             <label htmlFor="inactivos" className="flex h-11 cursor-pointer items-center text-sm text-muted">
               Inactivos

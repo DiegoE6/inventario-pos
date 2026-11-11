@@ -49,7 +49,7 @@ const control =
 function stateClasses(invalid?: boolean) {
   return invalid
     ? "border-danger focus:border-danger focus:ring-danger/20"
-    : "border-border-strong focus:border-primary focus:ring-primary/20";
+    : "border-border-strong focus:border-primary-ink focus:ring-primary/20";
 }
 
 type InputProps = InputHTMLAttributes<HTMLInputElement> & {

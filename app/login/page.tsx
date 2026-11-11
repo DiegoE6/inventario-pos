@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { BrandMark } from "@/app/components/brand-mark";
-import { brandStyle } from "@/app/lib/brand";
 import { getConfiguracion } from "@/app/lib/data";
 import { rolesDemoDisponibles } from "@/app/lib/demo";
 import { safeNext } from "@/app/lib/safe-next";
@@ -19,7 +18,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const rolesDemo = rolesDemoDisponibles();
 
   return (
-    <div data-brand style={brandStyle(config.color_primario)} className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col">
       <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-8 px-4 py-12">
         <header className="flex flex-col items-center gap-4 text-center">
           <BrandMark config={config} size={56} />

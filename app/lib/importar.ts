@@ -282,7 +282,7 @@ export async function prepararImportacion(hoja: Hoja): Promise<Vista> {
   const faltan = OBLIGATORIOS.filter((c) => !indice.has(c));
   if (faltan.length > 0) {
     throw new ImportacionInvalida(
-      `Faltan columnas: ${faltan.map((c) => TITULOS[c]).join(", ")}. La primera fila debe tener los encabezados de la plantilla.`
+      `${faltan.length === 1 ? "Falta la columna" : "Faltan las columnas"}: ${faltan.map((c) => TITULOS[c]).join(", ")}. La primera fila debe tener los encabezados de la plantilla.`
     );
   }
 

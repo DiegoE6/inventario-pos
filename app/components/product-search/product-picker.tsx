@@ -47,7 +47,7 @@ export function ProductPicker({
               <button
                 type="button"
                 onClick={() => onSelect(p)}
-                className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                className="flex min-h-14 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-ink"
               >
                 <span className="min-w-0 flex-1">
                   <span className="line-clamp-2 block text-base font-medium leading-snug">{p.nombre}</span>

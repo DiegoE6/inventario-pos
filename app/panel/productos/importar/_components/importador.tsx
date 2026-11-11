@@ -143,7 +143,7 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
         <label
           className={buttonClasses({
             variant: vista ? "secondary" : "primary",
-            className: `self-start cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary ${leyendo ? "pointer-events-none opacity-60" : ""}`,
+            className: `self-start cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-primary-ink ${leyendo ? "pointer-events-none opacity-60" : ""}`,
           })}
         >
           <Upload aria-hidden className="size-[18px]" />
@@ -183,7 +183,10 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
               </p>
             ))}
             {vista.columnasIgnoradas.length > 0 ? (
-              <p className="text-sm text-muted">Columnas que no se usan: {vista.columnasIgnoradas.join(", ")}.</p>
+              <p className="text-sm text-muted">
+                {vista.columnasIgnoradas.length === 1 ? "Columna que no se usa" : "Columnas que no se usan"}:{" "}
+                {vista.columnasIgnoradas.join(", ")}.
+              </p>
             ) : null}
           </Paso>
 
@@ -235,7 +238,7 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
                     type="checkbox"
                     checked={actualizar}
                     onChange={(e) => setActualizar(e.target.checked)}
-                    className="mt-0.5 size-5 shrink-0 accent-[var(--color-primary)]"
+                    className="mt-0.5 size-5 shrink-0 accent-[var(--color-primary-ink)]"
                   />
                   <span>
                     Actualizar precio y costo de los {conCambios.length === 1 ? "que cambió" : `${conCambios.length} que cambiaron`}
@@ -266,7 +269,8 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
               ) : null}
               {vista.existentes.length > conCambios.length ? (
                 <p className="text-sm text-muted">
-                  {conteo(vista.existentes.length - conCambios.length, "sin cambios", "sin cambios")}: se omiten.
+                  {conteo(vista.existentes.length - conCambios.length, "sin cambios", "sin cambios")}:{" "}
+                  {vista.existentes.length - conCambios.length === 1 ? "se omite" : "se omiten"}.
                 </p>
               ) : null}
             </Bloque>
@@ -311,15 +315,12 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
             <p className="text-[15px]">
               {aGuardar === 0
                 ? "No hay nada que guardar con este archivo."
-                : [
-                    vista.nuevas.length > 0 ? `Se crearán ${conteo(vista.nuevas.length, "producto", "productos")}` : null,
-                    actualizar && conCambios.length > 0
-                      ? `se ${conCambios.length === 1 ? "actualizará 1" : `actualizarán ${conCambios.length}`}`
-                      : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" y ") + "."}
-              {errores > 0 && aGuardar > 0 ? ` Las ${conteo(errores, "fila", "filas")} con error no se importan.` : ""}
+                : resumenGuardar(vista.nuevas.length, actualizar ? conCambios.length : 0)}
+              {errores > 0 && aGuardar > 0
+                ? errores === 1
+                  ? " La fila con error no se importa."
+                  : ` Las ${conteo(errores, "fila", "filas")} con error no se importan.`
+                : ""}
             </p>
             {errores > 0 && aGuardar > 0 ? (
               <label className="flex items-start gap-3 text-[15px]">
@@ -327,9 +328,11 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
                   type="checkbox"
                   checked={acepto}
                   onChange={(e) => setAcepto(e.target.checked)}
-                  className="mt-0.5 size-5 shrink-0 accent-[var(--color-primary)]"
+                  className="mt-0.5 size-5 shrink-0 accent-[var(--color-primary-ink)]"
                 />
-                Entiendo que las filas con error no se importan.
+                {errores === 1
+                  ? "Entiendo que la fila con error no se importa."
+                  : "Entiendo que las filas con error no se importan."}
               </label>
             ) : null}
             {error ? <Notice tone="danger">{error}</Notice> : null}
@@ -350,6 +353,21 @@ export function Importador({ maxBytes, maxFilas }: { maxBytes: number; maxFilas:
   );
 }
 
+/**
+ * "Se creará 1 producto.", "Se crearán 6 productos y se actualizará 1.",
+ * "Se actualizarán 2 productos."
+ */
+function resumenGuardar(nuevos: number, actualizados: number) {
+  const crear = nuevos === 1 ? "Se creará 1 producto" : `Se crearán ${conteo(nuevos, "producto", "productos")}`;
+  if (nuevos > 0 && actualizados > 0) {
+    return `${crear} y ${actualizados === 1 ? "se actualizará 1" : `se actualizarán ${actualizados.toLocaleString("es-MX")}`}.`;
+  }
+  if (nuevos > 0) return `${crear}.`;
+  return actualizados === 1
+    ? "Se actualizará 1 producto."
+    : `Se actualizarán ${conteo(actualizados, "producto", "productos")}.`;
+}
+
 /** "Importar 6 productos", "Importar 6 y actualizar 1", "Actualizar 1 producto". */
 function textoBoton(nuevos: number, actualizados: number) {
   if (nuevos > 0 && actualizados > 0) return `Importar ${nuevos} y actualizar ${actualizados}`;
@@ -366,7 +384,7 @@ function Paso({ n, titulo, children }: { n: number; titulo: string; children: Re
   return (
     <section className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-surface p-4">
       <h2 className="flex items-center gap-2.5 text-lg font-semibold">
-        <span aria-hidden className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
+        <span aria-hidden className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-sm font-semibold text-primary-ink">
           {n}
         </span>
         {titulo}
@@ -405,7 +423,7 @@ function Chips({ label, items }: { label: string; items: string[] }) {
       <p className="text-sm text-muted">{label}</p>
       <ul className="flex flex-wrap gap-1.5">
         {items.map((x) => (
-          <li key={x} className="rounded-full bg-primary-soft px-3 py-1 text-sm font-medium text-primary">
+          <li key={x} className="rounded-full bg-primary-soft px-3 py-1 text-sm font-medium text-primary-ink">
             {x}
           </li>
         ))}

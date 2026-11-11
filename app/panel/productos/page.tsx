@@ -136,7 +136,7 @@ export default async function ProductosPage({ searchParams }: PageProps<"/panel/
                     <td className="px-4 py-3">
                       <Link
                         href={`/panel/productos/${p.id}`}
-                        className="font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+                        className="font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
                       >
                         {p.nombre}
                       </Link>

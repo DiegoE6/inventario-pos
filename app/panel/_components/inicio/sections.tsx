@@ -54,7 +54,7 @@ export function PeriodTabs({ periodo }: { periodo: Periodo }) {
             scroll={false}
             replace
             aria-current={actual ? "page" : undefined}
-            className={`flex h-9 items-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary ${
+            className={`flex h-9 items-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary-ink ${
               actual ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"
             }`}
           >
@@ -79,7 +79,7 @@ export function TopProducts({ items }: { items: MasVendido[] }) {
             <div className="flex min-w-0 flex-1 flex-col">
               <Link
                 href={`/panel/productos/${p.productoId}`}
-                className="truncate text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+                className="truncate text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
               >
                 {p.nombre}
               </Link>
@@ -89,7 +89,7 @@ export function TopProducts({ items }: { items: MasVendido[] }) {
           </div>
           {/* Barra fina: proporción contra el primero, para leer el top de un vistazo. */}
           <div aria-hidden className="ml-7 h-1 rounded-full bg-surface-muted">
-            <div className="h-full rounded-full bg-primary/60" style={{ width: `${(p.importeCents / max) * 100}%` }} />
+            <div className="h-full rounded-full bg-primary-ink" style={{ width: `${(p.importeCents / max) * 100}%` }} />
           </div>
         </li>
       ))}
@@ -110,7 +110,7 @@ export function LowStockList({ items, puedeRegistrar }: { items: StockBajo[]; pu
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <Link
               href={`/panel/productos/${p.id}`}
-              className="line-clamp-2 text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+              className="line-clamp-2 text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
             >
               {p.nombre}
             </Link>

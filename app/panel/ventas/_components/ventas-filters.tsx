@@ -8,7 +8,7 @@ import { Select } from "@/app/components/ui/field";
 type Filtros = { desde: string; hasta: string; estado: string; metodo: string };
 
 const dateClass =
-  "h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-base text-foreground focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 /**
  * Filtros en la URL (?desde=&hasta=&estado=&metodo=). Las fechas son días de
@@ -98,7 +98,7 @@ export function VentasFilters({
             <button
               type="button"
               onClick={() => navigate({ desde: "", hasta: "", estado: "", metodo: "" })}
-              className="ml-auto font-medium text-primary hover:underline"
+              className="ml-auto font-medium text-primary-ink hover:underline"
             >
               Últimos 7 días, sin filtros
             </button>

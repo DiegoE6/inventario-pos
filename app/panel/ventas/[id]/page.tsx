@@ -37,7 +37,12 @@ export default async function VentaPage({ params }: PageProps<"/panel/ventas/[id
     cambio: venta.cambio,
     atendio: venta.atendio ?? "",
     items: venta.items,
-    negocio: { nombre: config.nombre, direccion: config.direccion, telefono: config.telefono },
+    negocio: {
+        nombre: config.nombre,
+        direccion: config.direccion,
+        telefono: config.telefono,
+        logo_url: config.logo_url,
+      },
     cancelada,
   };
 

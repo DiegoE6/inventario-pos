@@ -52,9 +52,9 @@ export default async function InventarioPage({ searchParams }: PageProps<"/panel
           <Link
             key={h}
             href={conProducto(h)}
-            className="flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-[var(--radius-card)] border border-border bg-surface p-3 text-center transition-[transform,border-color] duration-150 ease-out hover:border-border-strong motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-[var(--radius-card)] border border-border bg-surface p-3 text-center transition-[transform,border-color] duration-150 ease-out hover:border-border-strong motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
           >
-            <Icon aria-hidden className="size-6 text-primary" />
+            <Icon aria-hidden className="size-6 text-primary-ink" />
             <span className="text-base font-semibold">{label}</span>
             <span className="hidden text-[13px] text-muted sm:block">{detalle}</span>
           </Link>

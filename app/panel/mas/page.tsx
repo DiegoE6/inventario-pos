@@ -24,7 +24,7 @@ export default async function MasPage() {
             <li key={href}>
               <Link
                 href={href}
-                className="flex min-h-14 items-center gap-3 px-4 text-base transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+                className="flex min-h-14 items-center gap-3 px-4 text-base transition-colors duration-150 hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-ink"
               >
                 <Icon aria-hidden className="size-5 text-muted" />
                 <span className="flex-1">{label}</span>

@@ -3,13 +3,21 @@
 /*
  * Sistema visual — Fase 2. Solo tema claro (modo oscuro: pendiente Fase 9).
  *
- * --color-primary y --color-on-primary se sobreescriben por negocio con
- * brandStyle() (app/lib/brand.ts) en un contenedor con `data-brand`.
+ * --color-primary, --color-on-primary y --color-primary-ink se sobreescriben
+ * por negocio con brandStyle() (app/lib/brand.ts) en <html data-brand> (y en
+ * la vista previa de Configuración).
+ *
+ * primary: fondos (botones, barra del carrito), con on-primary encima.
+ * primary-ink: el primario oscurecido hasta ≥ 4.5:1 sobre los fondos claros.
+ * Para texto, contornos de foco, bordes activos y barras de gráficas: con un
+ * amarillo como marca, el primario puro no se leería sobre blanco.
  */
 @theme {
   /* Marca */
   --color-primary: #c2410c;
   --color-on-primary: #ffffff;
+  --color-primary-ink: #be400c; /* primaryInk("#c2410c") */
+  --color-primary-ink-muted: #cf724b; /* primaryInkMuted: ≥ 3:1, barras no seleccionadas */
   --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
   --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
 
@@ -147,6 +155,13 @@ dialog.app-dialog[open]::backdrop {
 
   .no-print {
     display: none !important;
+  }
+
+  /* Logo del negocio en el ticket: gris, 12 mm de alto y hasta 3 veces eso de ancho. */
+  .ticket-logo {
+    height: 12mm !important;
+    max-width: 36mm !important;
+    filter: grayscale(1) contrast(1.2);
   }
 }
 

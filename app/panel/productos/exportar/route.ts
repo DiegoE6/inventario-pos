@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { requireDueno } from "@/app/lib/auth";
-import { parseProductosQuery } from "@/app/lib/data";
+import { nombreArchivo } from "@/app/lib/brand";
+import { getConfiguracion, parseProductosQuery } from "@/app/lib/data";
 import { exportError, hoja, xlsxResponse } from "@/app/lib/excel/escribir";
 import { ilikeContains } from "@/app/lib/search";
 import { createClient } from "@/app/lib/supabase/server";
@@ -104,5 +105,6 @@ export async function GET(request: NextRequest) {
     productos
   );
 
-  return xlsxResponse([sheet], `productos_${todayYmd()}.xlsx`);
+  const config = await getConfiguracion();
+  return xlsxResponse([sheet], nombreArchivo(config.nombre, `productos-${todayYmd()}`));
 }

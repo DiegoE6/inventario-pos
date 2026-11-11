@@ -6,7 +6,7 @@ import { LoaderCircle } from "lucide-react";
 import type { Atajo } from "@/app/lib/reportes";
 
 const dateClass =
-  "h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-base text-foreground focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 /**
  * Rango del reporte en la URL: atajos (?rango=semana) o fechas (?desde=&hasta=).
@@ -47,7 +47,7 @@ export function RangePicker({
               type="button"
               aria-pressed={actual}
               onClick={() => go({ rango: a.valor })}
-              className={`flex h-9 items-center justify-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary ${
+              className={`flex h-9 items-center justify-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary-ink ${
                 actual ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"
               }`}
             >

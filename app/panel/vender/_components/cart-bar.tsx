@@ -22,7 +22,7 @@ export function CartBar({
       <button
         type="button"
         onClick={onOpen}
-        className="flex h-14 w-full items-center gap-3 rounded-[var(--radius-control)] bg-primary px-4 text-on-primary transition-transform duration-150 ease-out motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex h-14 w-full items-center gap-3 rounded-[var(--radius-control)] bg-primary px-4 text-on-primary transition-transform duration-150 ease-out motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
       >
         <span className="relative">
           <ShoppingCart aria-hidden className="size-6" />

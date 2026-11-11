@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { DEFAULT_PRIMARY } from "@/app/lib/brand";
+import { brandStyle, safePrimary } from "@/app/lib/brand";
+import { getConfiguracion } from "@/app/lib/data";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,21 +14,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Ferretería La Tuerca",
-  description: "Inventario y punto de venta",
-};
+/*
+ * La marca (nombre y color) sale de configuracion_negocio en CADA petición:
+ * getConfiguracion usa cache() de React, que dura solo esa petición, y el
+ * cliente de Supabase lee cookies, así que Next no guarda esta página entre
+ * peticiones. Un cambio en Configuración se ve en la siguiente navegación.
+ */
 
-export const viewport: Viewport = {
-  themeColor: DEFAULT_PRIMARY,
-  // Permite usar env(safe-area-inset-*) para la barra inferior en iPhone.
-  viewportFit: "cover",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getConfiguracion();
+  return {
+    title: { template: `%s · ${config.nombre}`, default: config.nombre },
+    description: "Inventario y punto de venta",
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export async function generateViewport(): Promise<Viewport> {
+  const config = await getConfiguracion();
+  return {
+    themeColor: safePrimary(config.color_primario),
+    // Permite usar env(safe-area-inset-*) para la barra inferior en iPhone.
+    viewportFit: "cover",
+  };
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const config = await getConfiguracion();
+
   return (
+    // La marca va en <html> desde el HTML del servidor: sin parpadeo del color
+    // por defecto. brandStyle valida el #RRGGBB antes de ponerlo en `style`.
     <html
       lang="es"
+      data-brand
+      style={brandStyle(config.color_primario)}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>

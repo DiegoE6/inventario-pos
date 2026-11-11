@@ -12,7 +12,7 @@ export function ComingSoon({
 }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface px-6 py-12 text-center">
-      <span className="flex size-12 items-center justify-center rounded-full bg-primary-soft text-primary">
+      <span className="flex size-12 items-center justify-center rounded-full bg-primary-soft text-primary-ink">
         <Icon aria-hidden className="size-6" />
       </span>
       <div className="flex flex-col gap-1">

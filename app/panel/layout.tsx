@@ -1,17 +1,10 @@
-import type { Metadata } from "next";
 import { FlaskConical } from "lucide-react";
 import { BrandMark } from "@/app/components/brand-mark";
 import { verifySession } from "@/app/lib/auth";
-import { brandStyle } from "@/app/lib/brand";
 import { getConfiguracion } from "@/app/lib/data";
 import { demoActivo } from "@/app/lib/demo";
 import { LogoutForm } from "./_components/logout-form";
 import { PanelBottomNav, SidebarLinks } from "./_components/nav-links";
-
-export async function generateMetadata(): Promise<Metadata> {
-  const config = await getConfiguracion();
-  return { title: { template: `%s · ${config.nombre}`, default: config.nombre } };
-}
 
 const ROL_LABEL = { dueno: "Dueño", cajero: "Cajero" } as const;
 
@@ -19,8 +12,8 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
   const [session, config] = await Promise.all([verifySession(), getConfiguracion()]);
 
   return (
-    // brandStyle valida que color_primario sea #RRGGBB; si no, usa el default.
-    <div data-brand style={brandStyle(config.color_primario)} className="flex min-h-dvh flex-1">
+    // La marca (colores) ya viene en <html> desde app/layout.tsx.
+    <div className="flex min-h-dvh flex-1">
       {/* Barra lateral: escritorio */}
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-6 border-r border-border bg-surface px-3 py-5 md:flex">
         <div className="flex items-center gap-3 px-2">
@@ -48,7 +41,7 @@ export default async function PanelLayout({ children }: LayoutProps<"/panel">) {
             role="note"
             className="flex items-center justify-center gap-2 border-b border-border bg-primary/8 px-4 py-2 text-center text-[13px] leading-snug text-muted"
           >
-            <FlaskConical aria-hidden className="size-4 shrink-0 text-primary" />
+            <FlaskConical aria-hidden className="size-4 shrink-0 text-primary-ink" />
             <span>Estás viendo un demo · los datos se reinician cada noche</span>
           </p>
         ) : null}

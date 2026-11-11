@@ -1,3 +1,5 @@
+import { logoSrc } from "@/app/lib/brand";
+import { env } from "@/app/lib/env";
 import type { Configuracion } from "@/app/lib/types";
 
 /** Iniciales de las dos últimas palabras: "Ferretería La Tuerca" → "LT". */
@@ -6,25 +8,34 @@ function initials(nombre: string): string {
   return words.slice(-2).map((w) => w[0]).join("").toUpperCase() || "•";
 }
 
-/** Logo del negocio o, si no hay, sus iniciales sobre el color de marca. */
+/**
+ * Logo del negocio o, si no hay, sus iniciales sobre el color de marca.
+ * `logo_url` es la ruta relativa del bucket `marca` (la BD no acepta otra
+ * cosa); aquí se le antepone la URL del proyecto. `src` deja pasar una URL
+ * local (blob:) para la vista previa antes de guardar.
+ */
 export function BrandMark({
   config,
   size = 40,
+  src,
 }: {
   config: Pick<Configuracion, "nombre" | "logo_url">;
   size?: number;
+  src?: string | null;
 }) {
-  if (config.logo_url && /^https:\/\//.test(config.logo_url)) {
+  const url = src ?? logoSrc(config.logo_url, env.supabaseUrl);
+  if (url) {
     return (
-      // El logo viene de la configuración del negocio (URL externa, Fase 8).
+      // Imagen chica ya optimizada al subirla (WEBP de máx. 512 px, docs/fase-8).
+      // Alto fijo; el ancho sigue la proporción del logo hasta 3 veces el alto,
+      // para que un logo horizontal no quede diminuto dentro de un cuadro.
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={config.logo_url}
+        src={url}
         alt={config.nombre}
-        width={size}
         height={size}
-        className="shrink-0 rounded-[10px] object-contain"
-        style={{ width: size, height: size }}
+        className="w-auto shrink-0 object-contain object-left"
+        style={{ height: size, maxWidth: size * 3 }}
       />
     );
   }

@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { METODO_LABEL } from "@/app/components/ticket";
 import { requireDueno } from "@/app/lib/auth";
+import { nombreArchivo } from "@/app/lib/brand";
 import { getConfiguracion } from "@/app/lib/data";
 import { exportError, hoja, hojaResumen, xlsxResponse } from "@/app/lib/excel/escribir";
 import {
@@ -133,5 +134,5 @@ export async function GET(request: NextRequest) {
     sinMov
   );
 
-  return xlsxResponse([hResumen, hPeriodo, hCategoria, hMetodo, hTop, hSin], `reporte_${desde}_a_${hasta}.xlsx`);
+  return xlsxResponse([hResumen, hPeriodo, hCategoria, hMetodo, hTop, hSin], nombreArchivo(config.nombre, `reporte-${desde}-a-${hasta}`));
 }
