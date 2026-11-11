@@ -70,7 +70,11 @@ export function OperacionForm({
   }
 
   return (
-    // key: otro producto = formulario y clave nuevos.
+    <>
+    {/* Recién registrado: el aviso sale ya, aunque regresar al buscador tarde
+        (pestaña en segundo plano o red lenta). */}
+    {aviso ? <Notice tone="success">{aviso}</Notice> : null}
+    {/* key: otro producto = formulario y clave nuevos. */}
     <Formulario
       key={producto.id}
       operacion={operacion}
@@ -89,6 +93,7 @@ export function OperacionForm({
             }
       }
     />
+    </>
   );
 }
 
@@ -133,8 +138,27 @@ function Formulario({
   const [perdida, setPerdida] = useState(false);
   // Se tocó Registrar: desde aquí se muestran los campos que faltan.
   const [intento, setIntento] = useState(false);
-  const [enviando, startEnvio] = useTransition();
+  // "Registrando…" depende solo de la respuesta del servidor. Antes vivía en
+  // una transición que incluía router.refresh(): en una pestaña en segundo
+  // plano el navegador frena el repintado y el botón se quedaba pegado aunque
+  // el movimiento ya estuviera guardado.
+  const [enviando, setEnviando] = useState(false);
   const bloqueo = useRef(false); // doble toque antes del re-render
+  const [, startRefresco] = useTransition();
+
+  /** Stock y últimos movimientos desde el servidor; si la pestaña está oculta, al volver a ella. */
+  function refrescar() {
+    if (document.visibilityState === "visible") {
+      startRefresco(() => router.refresh());
+      return;
+    }
+    const alVolver = () => {
+      if (document.visibilityState !== "visible") return;
+      document.removeEventListener("visibilitychange", alVolver);
+      startRefresco(() => router.refresh());
+    };
+    document.addEventListener("visibilitychange", alVolver);
+  }
 
   const stockBase = stockOverride ?? producto.stock;
   const baseMilli = stockMilli(stockBase);
@@ -166,7 +190,7 @@ function Formulario({
   const valido = milli !== null && !cantidadError && !costoInvalido && !enviando;
   const notaError = fieldErrors.nota ?? (intento && notaFalta ? "Escribe qué pasó." : undefined);
 
-  function registrar() {
+  async function registrar() {
     if (notaFalta) {
       setIntento(true);
       document.getElementById(`${operacion}-nota`)?.focus();
@@ -181,51 +205,51 @@ function Formulario({
     const comun = { clave, producto_id: producto.id };
     const cantidadTexto = milliToString(milli);
 
-    startEnvio(async () => {
-      try {
-        let res: InventarioResult;
-        if (operacion === "entrada") {
-          res = await registrarEntrada({ ...comun, cantidad: cantidadTexto, costo, nota });
-        } else if (operacion === "merma") {
-          res = await registrarMerma({ ...comun, cantidad: cantidadTexto, nota });
-        } else {
-          res = await registrarConteo({ ...comun, contado: cantidadTexto, stock_esperado: stockBase, nota });
-        }
+    setEnviando(true);
+    try {
+      let res: InventarioResult;
+      if (operacion === "entrada") {
+        res = await registrarEntrada({ ...comun, cantidad: cantidadTexto, costo, nota });
+      } else if (operacion === "merma") {
+        res = await registrarMerma({ ...comun, cantidad: cantidadTexto, nota });
+      } else {
+        res = await registrarConteo({ ...comun, contado: cantidadTexto, stock_esperado: stockBase, nota });
+      }
 
-        if (res.ok) {
-          const mensaje = mensajeExito(res, producto.unidad);
-          setClave(uuidv4()); // la siguiente operación es otra
-          setCantidad("");
-          setNota("");
-          setIntento(false);
-          setStockOverride(null);
-          setFieldErrors({});
-          if (onRegistrado) {
-            onRegistrado(mensaje); // regresa al buscador con el aviso
-            return;
-          }
-          setExito(mensaje);
-          router.refresh(); // stock y últimos movimientos desde el servidor
+      if (res.ok) {
+        const mensaje = mensajeExito(res, producto.unidad);
+        setClave(uuidv4()); // la siguiente operación es otra
+        setCantidad("");
+        setNota("");
+        setIntento(false);
+        setStockOverride(null);
+        setFieldErrors({});
+        if (onRegistrado) {
+          onRegistrado(mensaje); // regresa al buscador con el aviso
           return;
         }
-        setError(res.error);
-        setFieldErrors(res.fieldErrors ?? {});
-        // Conteo: el stock cambió. Se recalcula la diferencia contra el stock
-        // actual; lo capturado se queda y la misma clave sirve (no se registró).
-        // router.refresh() actualiza también el "Stock actual" y los movimientos.
-        if (res.stockActual !== undefined) {
-          setStockOverride(res.stockActual);
-          router.refresh();
-        }
-      } catch {
-        // No se sabe si quedó registrado: se muestran los últimos movimientos.
-        // Reintentar con la misma clave nunca lo registra dos veces.
-        setPerdida(true);
-        router.refresh();
-      } finally {
-        bloqueo.current = false;
+        setExito(mensaje);
+        refrescar();
+        return;
       }
-    });
+      setError(res.error);
+      setFieldErrors(res.fieldErrors ?? {});
+      // Conteo: el stock cambió. Se recalcula la diferencia contra el stock
+      // actual; lo capturado se queda y la misma clave sirve (no se registró).
+      // router.refresh() actualiza también el "Stock actual" y los movimientos.
+      if (res.stockActual !== undefined) {
+        setStockOverride(res.stockActual);
+        refrescar();
+      }
+    } catch {
+      // No se sabe si quedó registrado: se muestran los últimos movimientos.
+      // Reintentar con la misma clave nunca lo registra dos veces.
+      setPerdida(true);
+      refrescar();
+    } finally {
+      bloqueo.current = false;
+      setEnviando(false);
+    }
   }
 
   const stockCambio = operacion === "conteo" && stockOverride !== null && error;

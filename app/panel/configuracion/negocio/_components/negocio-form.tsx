@@ -6,7 +6,7 @@ import { BrandMark } from "@/app/components/brand-mark";
 import { Notice } from "@/app/components/notice";
 import { Button } from "@/app/components/ui/button";
 import { Field, Input } from "@/app/components/ui/field";
-import { brandStyle, contrastRatio, isHexColor, onColorFor, primaryInk } from "@/app/lib/brand";
+import { brandStyle, contrastRatio, isHexColor, onColorFor, primaryInk, primaryInkOscuro } from "@/app/lib/brand";
 import type { Configuracion, FormState } from "@/app/lib/types";
 import { guardarNegocio, quitarLogo, restaurarMarcaDemo, subirLogo } from "../actions";
 
@@ -148,7 +148,7 @@ export function NegocioForm({ config, logoActual }: { config: Configuracion; log
                     aria-label={s.nombre}
                     title={s.nombre}
                     onClick={() => elegirColor(s.hex)}
-                    className="flex size-11 items-center justify-center rounded-full border border-black/10 transition-transform duration-150 ease-out motion-safe:active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
+                    className="flex size-11 items-center justify-center rounded-full border border-black/10 transition-transform duration-150 ease-out motion-safe:active:scale-[0.95] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
                     style={{ backgroundColor: s.hex, color: onColorFor(s.hex) }}
                   >
                     {activo ? <Check aria-hidden className="size-5" /> : null}
@@ -248,6 +248,8 @@ function ContrasteInfo({ color }: { color: string }) {
           <span className="font-mono text-foreground">{ink}</span> ({ratio.toFixed(1)}:1).
         </>
       )}
+      {" "}
+      En modo oscuro, el texto usa <span className="font-mono text-foreground">{primaryInkOscuro(color)}</span>.
     </p>
   );
 }

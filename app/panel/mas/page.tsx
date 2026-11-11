@@ -4,6 +4,8 @@ import { ChevronRight } from "lucide-react";
 import { PageHeader } from "@/app/components/page-header";
 import { verifySession } from "@/app/lib/auth";
 import { MORE_NAV, navFor } from "@/app/lib/nav";
+import { getTema } from "@/app/lib/tema-servidor";
+import { TemaSelector } from "@/app/components/tema-selector";
 import { LogoutForm } from "../_components/logout-form";
 
 export const metadata: Metadata = { title: "Más" };
@@ -11,7 +13,7 @@ export const metadata: Metadata = { title: "Más" };
 const ROL_LABEL = { dueno: "Dueño", cajero: "Cajero" } as const;
 
 export default async function MasPage() {
-  const session = await verifySession();
+  const [session, tema] = await Promise.all([verifySession(), getTema()]);
   const items = navFor(MORE_NAV, session.rol);
 
   return (
@@ -34,6 +36,14 @@ export default async function MasPage() {
           ))}
         </ul>
       </nav>
+
+      <section aria-labelledby="apariencia" className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-border bg-surface p-4">
+        <h2 id="apariencia" className="text-base font-semibold">
+          Apariencia
+        </h2>
+        <TemaSelector inicial={tema} />
+        <p className="text-sm text-muted">Se guarda en este dispositivo. El ticket siempre sale en claro.</p>
+      </section>
 
       <section className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-border bg-surface p-4">
         <div>

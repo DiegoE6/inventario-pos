@@ -30,7 +30,7 @@ export function TicketDialog({ ticket, onNueva }: { ticket: Ticket | null; onNue
       ref={ref}
       onClose={onNueva}
       aria-label="Ticket de venta"
-      className="ticket-dialog m-auto w-[min(100%-2rem,380px)] rounded-[var(--radius-card)] border border-border bg-surface p-0 text-foreground backdrop:bg-black/40"
+      className="ticket-dialog tema-claro m-auto w-[min(100%-2rem,380px)] rounded-[var(--radius-card)] border border-border bg-surface p-0 text-foreground backdrop:bg-black/40"
     >
       {ticket ? (
         <div className="flex max-h-[90dvh] flex-col">

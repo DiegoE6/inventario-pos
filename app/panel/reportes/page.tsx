@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Download } from "lucide-react";
+import Link from "next/link";
+import { ChartColumn, Download } from "lucide-react";
+import { EstadoVacio } from "@/app/components/estado";
 import { Notice } from "@/app/components/notice";
 import { PageHeader } from "@/app/components/page-header";
 import { buttonClasses } from "@/app/components/ui/button";
@@ -92,6 +94,38 @@ export default async function ReportesPage({ searchParams }: PageProps<"/panel/r
   const margen = resumen ? margenPct(resumen.gananciaCents, resumen.ventasCents) : null;
   const money = (cents: number | undefined) => (cents === undefined ? "—" : <MoneyFigure cents={cents} ajustar />);
   const noCargo = resumen ? null : <span className="text-muted">{NO_CARGO}</span>;
+  // Sin ventas en el rango: un solo aviso en lugar de seis tarjetas en $0.00.
+  // "Sin movimiento" se queda: justo ahí es útil.
+  const sinVentas = resumen !== null && resumen.numVentas === 0;
+  const sinMovimiento = (
+    <Section title="Sin movimiento">
+      {sinMov ? <SinMovimientoList items={sinMov} limite={SIN_MOVIMIENTO_LIMITE} /> : <SinDatos>{NO_CARGO}</SinDatos>}
+    </Section>
+  );
+
+  if (sinVentas) {
+    const otros = ATAJOS.filter((a) => (a.valor === "mes" || a.valor === "mes-pasado") && a.valor !== rango.atajo);
+    return (
+      <>
+        <PageHeader title="Reportes" />
+        {picker(textoRango)}
+        <EstadoVacio
+          icon={ChartColumn}
+          titulo={`No hubo ventas ${desde === hasta ? "este día" : "en este rango"}`}
+          acciones={otros.map((a) => (
+            <Link key={a.valor} href={`/panel/reportes?rango=${a.valor}`} className={buttonClasses({ variant: "secondary" })}>
+              Ver {a.label.toLowerCase()}
+            </Link>
+          ))}
+        >
+          {resumen.numCanceladas > 0
+            ? `Hubo ${resumen.numCanceladas === 1 ? "1 venta cancelada" : `${resumen.numCanceladas} ventas canceladas`} (${formatCents(resumen.canceladasCents)}), que no cuentan.`
+            : "Elige otras fechas o un atajo."}
+        </EstadoVacio>
+        {sinMovimiento}
+      </>
+    );
+  }
 
   return (
     <>
@@ -169,13 +203,7 @@ export default async function ReportesPage({ searchParams }: PageProps<"/panel/r
         <Section title="Más vendidos">
           {top ? <TopProducts items={top} /> : <SinDatos>{NO_CARGO}</SinDatos>}
         </Section>
-        <Section title="Sin movimiento">
-          {sinMov ? (
-            <SinMovimientoList items={sinMov} limite={SIN_MOVIMIENTO_LIMITE} />
-          ) : (
-            <SinDatos>{NO_CARGO}</SinDatos>
-          )}
-        </Section>
+        {sinMovimiento}
       </div>
     </>
   );

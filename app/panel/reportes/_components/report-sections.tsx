@@ -143,21 +143,26 @@ const fechaCorta = new Intl.DateTimeFormat("es-MX", {
 /** Lo que no se vendió en el rango, del que más dinero tiene detenido al que menos. */
 export function SinMovimientoList({ items, limite }: { items: SinMovimiento[]; limite: number }) {
   if (items.length === 0) {
-    return <SinDatos>Todo lo que tiene existencias se vendió al menos una vez en este rango.</SinDatos>;
+    return (
+      <SinDatos>
+        Ningún producto se quedó sin venderse en este rango. No cuentan los productos que todavía no existían al empezar el rango.
+      </SinDatos>
+    );
   }
   return (
     <>
       <p className="-mt-2 text-sm text-muted">
-        Productos con existencias que no se vendieron en este rango.
+        Productos con existencias que no se vendieron en este rango. No incluye los productos que todavía no
+        existían al empezar el rango.
         {items.length >= limite ? ` Se muestran los ${limite} con más dinero detenido.` : null}
       </p>
       <ul className="-my-1 flex flex-col divide-y divide-border">
         {items.map((p) => (
-          <li key={p.productoId} className="flex items-start gap-3 py-3">
+          <li key={p.productoId} className="relative flex items-start gap-3 py-3">
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <Link
                 href={`/panel/productos/${p.productoId}`}
-                className="line-clamp-2 text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+                className="line-clamp-2 text-[15px] font-medium after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
               >
                 {p.nombre}
               </Link>

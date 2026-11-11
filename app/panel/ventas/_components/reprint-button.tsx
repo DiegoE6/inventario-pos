@@ -27,7 +27,7 @@ export function ReprintButton({ ticket }: { ticket: TicketData }) {
       <dialog
         ref={ref}
         aria-label={`Ticket de la venta ${ticket.folio}`}
-        className="ticket-dialog app-dialog m-auto w-[min(100%-2rem,380px)] rounded-[var(--radius-card)] border border-border bg-surface p-0 text-foreground backdrop:bg-black/40"
+        className="ticket-dialog tema-claro app-dialog m-auto w-[min(100%-2rem,380px)] rounded-[var(--radius-card)] border border-border bg-surface p-0 text-foreground backdrop:bg-black/40"
       >
         <div className="flex max-h-[90dvh] flex-col">
           <div className="overflow-y-auto p-4">

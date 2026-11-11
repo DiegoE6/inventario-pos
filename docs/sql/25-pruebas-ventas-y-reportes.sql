@@ -267,6 +267,10 @@ select set_config('pruebas.sin_stock', (select id::text from public.productos
   order by codigo limit 1), true);
 update public.productos set activo = false where id = current_setting('pruebas.inactivo')::uuid;
 update public.productos set stock = 0 where id = current_setting('pruebas.sin_stock')::uuid;
+-- Desde 30, "Sin movimiento" no incluye productos dados de alta dentro del
+-- rango. Los de la semilla se fechan antes del rango de esta prueba (2000);
+-- es solo dentro de esta transacción.
+update public.productos set creado_en = timestamptz '1999-12-01 08:00-06';
 select set_config('pruebas.p3_valor', (select round(stock * costo, 2)::text from public.productos
   where id = current_setting('pruebas.p3')::uuid), true);
 select set_config('pruebas.p3_ultima', coalesce((select max(v.creado_en)::text from public.venta_detalle d

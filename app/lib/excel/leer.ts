@@ -1,6 +1,7 @@
 import "server-only";
 import { readSheet } from "read-excel-file/node";
 import { decodificar, leerCsv } from "./csv";
+import { celdasSinResultado, type CeldaSinResultado } from "./formulas";
 import { revisarZip, ZipInvalido } from "./zip";
 
 /**
@@ -15,7 +16,11 @@ export const MAX_FILAS = 500;
 
 export class ArchivoInvalido extends Error {}
 
-export type Hoja = string[][];
+/**
+ * Filas como texto. En un .xlsx, `sinResultado` trae las celdas con fórmula
+ * que se leyeron vacías (sin resultado guardado o con error), para avisarlo.
+ */
+export type Hoja = string[][] & { sinResultado?: CeldaSinResultado[] };
 
 function aTexto(v: unknown): string {
   if (v === null || v === undefined) return "";
@@ -31,8 +36,9 @@ export async function leerArchivo(file: File): Promise<Hoja> {
   const esZip = buf.length >= 4 && buf.readUInt32LE(0) === 0x04034b50;
 
   if (esZip) {
+    let partes: Map<string, Buffer>;
     try {
-      revisarZip(buf);
+      partes = revisarZip(buf);
     } catch (e) {
       if (e instanceof ZipInvalido) throw new ArchivoInvalido(e.message);
       throw e;
@@ -41,7 +47,9 @@ export async function leerArchivo(file: File): Promise<Hoja> {
       // Siempre un Buffer: un string sería una ruta del disco para la librería.
       // parseNumber deja los números como el texto exacto que guardó Excel.
       const data = await readSheet(buf, 1, { parseNumber: (s: string) => s, trim: true });
-      return data.map((fila) => fila.map(aTexto));
+      const hoja: Hoja = data.map((fila) => fila.map(aTexto));
+      hoja.sinResultado = celdasSinResultado(partes);
+      return hoja;
     } catch {
       throw new ArchivoInvalido("No se pudo leer el Excel. Guárdalo como .xlsx y vuelve a intentar.");
     }

@@ -155,31 +155,31 @@ export type StockBajo = {
 
 const STOCK_BAJO_LIMITE = 50;
 
-/** Agotados primero; luego los que tienen menos stock respecto a su mínimo. */
+/**
+ * Los 50 más urgentes: la base los ordena por `proporcion` (stock ÷ mínimo,
+ * 0 = agotado; docs/sql/30) y luego por nombre. Antes se pedían los primeros
+ * 50 por nombre y se ordenaban aquí: con más de 50, un agotado que empezara
+ * con "Z" no salía.
+ */
 export async function getStockBajo(): Promise<{ items: StockBajo[]; total: number } | null> {
   const supabase = await createClient();
   const { data, error, count } = await supabase
     .from("v_stock_bajo")
     .select("id, nombre, unidad, stock, stock_minimo", { count: "exact" })
+    .order("proporcion")
     .order("nombre")
+    .order("id")
     .limit(STOCK_BAJO_LIMITE);
   if (error || !data) {
     console.error("[v_stock_bajo]", error);
     return null;
   }
-  const items = data
-    .map((p) => ({
-      id: p.id as string,
-      nombre: p.nombre as string,
-      unidad: p.unidad as Unidad,
-      stock: Number(p.stock),
-      stockMinimo: Number(p.stock_minimo),
-    }))
-    .sort((a, b) => ratio(a) - ratio(b));
+  const items = data.map((p) => ({
+    id: p.id as string,
+    nombre: p.nombre as string,
+    unidad: p.unidad as Unidad,
+    stock: Number(p.stock),
+    stockMinimo: Number(p.stock_minimo),
+  }));
   return { items, total: count ?? items.length };
-}
-
-function ratio(p: StockBajo) {
-  if (p.stock <= 0) return -1;
-  return p.stockMinimo > 0 ? p.stock / p.stockMinimo : 1;
 }

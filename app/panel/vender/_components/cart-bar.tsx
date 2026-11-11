@@ -22,7 +22,12 @@ export function CartBar({
       <button
         type="button"
         onClick={onOpen}
-        className="flex h-14 w-full items-center gap-3 rounded-[var(--radius-control)] bg-primary px-4 text-on-primary transition-transform duration-150 ease-out motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
+        // Vacío: neutro (no es una acción todavía). Con productos: el color de la
+        // marca, que es lo que se toca para cobrar. El cambio de color es un
+        // estado, así que transiciona; el transform solo responde al toque.
+        className={`flex h-14 w-full items-center gap-3 rounded-[var(--radius-control)] px-4 transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink ${
+          count === 0 ? "border border-border-strong bg-surface-muted text-muted" : "bg-primary text-on-primary"
+        }`}
       >
         <span className="relative">
           <ShoppingCart aria-hidden className="size-6" />

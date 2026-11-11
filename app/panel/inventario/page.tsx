@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ClipboardCheck, PackageMinus, PackagePlus } from "lucide-react";
+import { ClipboardCheck, History, PackageMinus, PackagePlus } from "lucide-react";
+import { EstadoVacio } from "@/app/components/estado";
+import { buttonClasses } from "@/app/components/ui/button";
 import { PageHeader } from "@/app/components/page-header";
 import { Pagination } from "@/app/components/pagination";
 import { requireDueno } from "@/app/lib/auth";
@@ -72,6 +74,7 @@ export default async function InventarioPage({ searchParams }: PageProps<"/panel
           }}
           productoNombre={producto?.nombre ?? null}
           hoy={todayYmd()}
+          sinResultados={total === 0}
         />
 
         {movimientos.length > 0 ? (
@@ -82,10 +85,31 @@ export default async function InventarioPage({ searchParams }: PageProps<"/panel
           </p>
         ) : null}
 
-        <MovimientoList
-          movimientos={movimientos}
-          vacio={total > 0 ? "No hay movimientos en esta página." : "No hay movimientos con estos filtros."}
-        />
+        {movimientos.length > 0 ? (
+          <MovimientoList movimientos={movimientos} />
+        ) : total > 0 ? (
+          <EstadoVacio
+            icon={History}
+            titulo="No hay movimientos en esta página"
+            acciones={
+              <Link href={href(query, 1)} className={buttonClasses({ variant: "secondary" })}>
+                Ir a la primera página
+              </Link>
+            }
+          />
+        ) : (
+          <EstadoVacio
+            icon={History}
+            titulo="No hay movimientos con estos filtros"
+            acciones={
+              <Link href="/panel/inventario" className={buttonClasses({ variant: "secondary" })}>
+                Quitar filtros
+              </Link>
+            }
+          >
+            Cada venta, entrada, merma y conteo queda aquí. Prueba con otras fechas u otro tipo.
+          </EstadoVacio>
+        )}
 
         <Pagination pagina={query.pagina} paginas={paginas} href={(n) => href(query, n)} />
       </section>

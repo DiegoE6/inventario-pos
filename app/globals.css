@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 /*
- * Sistema visual — Fase 2. Solo tema claro (modo oscuro: pendiente Fase 9).
+ * Sistema visual. Claro por defecto; oscuro con data-theme="oscuro" en <html>
+ * o, sin elección ("Sistema"), cuando el sistema lo pide.
  *
- * --color-primary, --color-on-primary y --color-primary-ink se sobreescriben
- * por negocio con brandStyle() (app/lib/brand.ts) en <html data-brand> (y en
- * la vista previa de Configuración).
- *
- * primary: fondos (botones, barra del carrito), con on-primary encima.
- * primary-ink: el primario oscurecido hasta ≥ 4.5:1 sobre los fondos claros.
- * Para texto, contornos de foco, bordes activos y barras de gráficas: con un
- * amarillo como marca, el primario puro no se leería sobre blanco.
+ * Marca: brandStyle() (app/lib/brand.ts) escribe en <html data-brand> las
+ * variables --brand-… (versión clara y oscura) y aquí se pasan a los tokens:
+ *   primary       fondos (botones, barra del carrito), con on-primary encima.
+ *   primary-ink   el color de marca ajustado a ≥ 4.5:1 sobre las superficies
+ *                 (más oscuro en claro, más claro en oscuro). Texto, contornos
+ *                 de foco, bordes activos y barras de gráficas.
+ *   primary-ink-muted  ≥ 3:1: barras no seleccionadas.
  */
 @theme {
-  /* Marca */
+  /* Marca (valores por defecto; los reales salen de [data-brand]) */
   --color-primary: #c2410c;
   --color-on-primary: #ffffff;
   --color-primary-ink: #be400c; /* primaryInk("#c2410c") */
@@ -36,6 +36,7 @@
   --color-danger: #b91c1c;
   --color-danger-hover: #991b1b;
   --color-danger-soft: #fee2e2;
+  --color-on-danger: #ffffff;
 
   /* Tipografía */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -49,14 +50,139 @@
   --radius-card: 12px;
 }
 
+:root {
+  color-scheme: light;
+}
+
 /*
- * Los derivados se vuelven a declarar donde se cambia la marca: una variable
- * CSS con var() se resuelve en el elemento donde se declara, así que sin esto
- * el hover y el fondo suave seguirían usando el naranja de :root.
+ * Marca, versión clara. Se declara en cada [data-brand] (no solo en :root):
+ * una variable con var() se resuelve donde se declara, y la vista previa de
+ * Configuración trae su propio color.
  */
 [data-brand] {
+  --color-primary: var(--brand-primary, #c2410c);
+  --color-on-primary: var(--brand-on-primary, #ffffff);
+  --color-primary-ink: var(--brand-ink, #be400c);
+  --color-primary-ink-muted: var(--brand-ink-muted, #cf724b);
   --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
   --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
+}
+
+/*
+ * Modo oscuro. El mismo bloque dos veces: por elección (data-theme="oscuro")
+ * y por el sistema cuando no se eligió nada. Solo en pantalla: al imprimir,
+ * todo vuelve a los tokens claros (el ticket siempre sale en claro).
+ */
+@media screen {
+  :root[data-theme="oscuro"] {
+    color-scheme: dark;
+    --color-background: #0c0a09;
+    --color-surface: #1c1917;
+    --color-surface-muted: #292524;
+    --color-border: #34302d;
+    --color-border-strong: #78716c;
+    --color-foreground: #fafaf9;
+    --color-muted: #a8a29e;
+    --color-success: #34d399;
+    --color-success-soft: #0f2e22;
+    --color-danger: #f87171;
+    --color-danger-hover: #fca5a5;
+    --color-danger-soft: #3b1717;
+    --color-on-danger: #1c1917;
+  }
+
+  :root[data-theme="oscuro"],
+  :root[data-theme="oscuro"] [data-brand] {
+    --color-primary: var(--brand-primary-oscuro, #c2410c);
+    --color-on-primary: var(--brand-on-primary-oscuro, #ffffff);
+    --color-primary-ink: var(--brand-ink-oscuro, #f0875a);
+    --color-primary-ink-muted: var(--brand-ink-muted-oscuro, #a5603f);
+    --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, white);
+    --color-primary-soft: color-mix(in oklab, var(--color-primary-ink) 16%, var(--color-surface));
+  }
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="claro"]) {
+    color-scheme: dark;
+    --color-background: #0c0a09;
+    --color-surface: #1c1917;
+    --color-surface-muted: #292524;
+    --color-border: #34302d;
+    --color-border-strong: #78716c;
+    --color-foreground: #fafaf9;
+    --color-muted: #a8a29e;
+    --color-success: #34d399;
+    --color-success-soft: #0f2e22;
+    --color-danger: #f87171;
+    --color-danger-hover: #fca5a5;
+    --color-danger-soft: #3b1717;
+    --color-on-danger: #1c1917;
+  }
+
+  :root:not([data-theme="claro"]),
+  :root:not([data-theme="claro"]) [data-brand] {
+    --color-primary: var(--brand-primary-oscuro, #c2410c);
+    --color-on-primary: var(--brand-on-primary-oscuro, #ffffff);
+    --color-primary-ink: var(--brand-ink-oscuro, #f0875a);
+    --color-primary-ink-muted: var(--brand-ink-muted-oscuro, #a5603f);
+    --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, white);
+    --color-primary-soft: color-mix(in oklab, var(--color-primary-ink) 16%, var(--color-surface));
+  }
+}
+
+/*
+ * Siempre claro, aunque la app esté en oscuro: el ticket (es papel) y lo que
+ * se imprime. Vuelve a declarar los tokens claros en ese elemento.
+ */
+.tema-claro {
+  color-scheme: light;
+  --color-background: #fafaf9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f5f5f4;
+  --color-border: #e7e5e4;
+  --color-border-strong: #d6d3d1;
+  --color-foreground: #1c1917;
+  --color-muted: #57534e;
+  --color-success: #047857;
+  --color-success-soft: #ecfdf5;
+  --color-danger: #b91c1c;
+  --color-danger-hover: #991b1b;
+  --color-danger-soft: #fee2e2;
+  --color-on-danger: #ffffff;
+  --color-primary: var(--brand-primary, #c2410c);
+  --color-on-primary: var(--brand-on-primary, #ffffff);
+  --color-primary-ink: var(--brand-ink, #be400c);
+  --color-primary-ink-muted: var(--brand-ink-muted, #cf724b);
+  --color-primary-hover: color-mix(in oklab, var(--color-primary) 86%, black);
+  --color-primary-soft: color-mix(in oklab, var(--color-primary) 10%, white);
+  color: var(--color-foreground);
+}
+
+/*
+ * Logo en oscuro: un logo con letras oscuras y fondo transparente se perdería.
+ * Va sobre una ficha clara con un poco de aire.
+ */
+@media screen {
+  :root[data-theme="oscuro"] .logo-ficha {
+    background: #ffffff;
+    padding: 3px;
+    border-radius: 8px;
+  }
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="claro"]) .logo-ficha {
+    background: #ffffff;
+    padding: 3px;
+    border-radius: 8px;
+  }
+}
+
+/* Dentro de lo que siempre es claro (el ticket) el logo va sin ficha. */
+.tema-claro .logo-ficha {
+  background: none;
+  padding: 0;
 }
 
 html {
@@ -93,6 +219,53 @@ dialog.app-dialog[open]::backdrop {
   dialog.app-dialog[open],
   dialog.app-dialog[open]::backdrop {
     transition: none;
+  }
+}
+
+/*
+ * Avisos (guardado, error): aparecen con 4 px y opacidad en 150 ms. Sin esto
+ * el texto "brinca" al llegar la respuesta. Ocasionales: sí lleva animación.
+ */
+.aviso {
+  transition:
+    opacity 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+
+@starting-style {
+  .aviso {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/*
+ * Hoja del carrito en celular: se abre una vez por venta (decenas al día),
+ * así que el movimiento es mínimo: 12 px y opacidad en 150 ms. Dice "viene
+ * de la barra de abajo" sin frenar el cobro. Se cierra al instante.
+ */
+@media (max-width: 1023.98px) {
+  .hoja-carrito {
+    transition:
+      opacity 150ms var(--ease-out),
+      transform 150ms var(--ease-out);
+  }
+
+  @starting-style {
+    .hoja-carrito {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+}
+
+/* Movimiento reducido: sin desplazamientos; queda solo la opacidad. */
+@media (prefers-reduced-motion: reduce) {
+  @starting-style {
+    .aviso,
+    .hoja-carrito {
+      transform: none;
+    }
   }
 }
 

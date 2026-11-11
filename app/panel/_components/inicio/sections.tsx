@@ -54,7 +54,7 @@ export function PeriodTabs({ periodo }: { periodo: Periodo }) {
             scroll={false}
             replace
             aria-current={actual ? "page" : undefined}
-            className={`flex h-9 items-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary-ink ${
+            className={`flex h-10 items-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary-ink ${
               actual ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"
             }`}
           >
@@ -73,13 +73,13 @@ export function TopProducts({ items }: { items: MasVendido[] }) {
   return (
     <ol className="flex flex-col gap-3">
       {items.map((p, i) => (
-        <li key={p.productoId} className="flex flex-col gap-1.5">
+        <li key={p.productoId} className="relative flex flex-col gap-1.5">
           <div className="flex items-baseline gap-3">
             <span className="w-4 shrink-0 text-sm font-semibold tabular-nums text-muted">{i + 1}</span>
             <div className="flex min-w-0 flex-1 flex-col">
               <Link
                 href={`/panel/productos/${p.productoId}`}
-                className="truncate text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+                className="truncate text-[15px] font-medium after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
               >
                 {p.nombre}
               </Link>
@@ -107,10 +107,12 @@ export function LowStockList({ items, puedeRegistrar }: { items: StockBajo[]; pu
     <ul className="-my-1 flex flex-col divide-y divide-border">
       {items.map((p) => (
         <li key={p.id} className="flex items-center gap-3 py-3">
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
+          {/* relative: el enlace estirado cubre el nombre y los datos (de alto, también el
+              padding de la fila), pero no el botón de entrada. */}
+          <div className="relative flex min-w-0 flex-1 flex-col gap-1">
             <Link
               href={`/panel/productos/${p.id}`}
-              className="line-clamp-2 text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+              className="line-clamp-2 text-[15px] font-medium after:absolute after:-inset-y-3 after:inset-x-0 after:content-[''] hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
             >
               {p.nombre}
             </Link>

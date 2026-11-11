@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { WifiOff } from "lucide-react";
 import {
   addToCart,
   cartSummary,
@@ -60,7 +61,19 @@ function save(key: string, state: CartState) {
 
 const finePointer = () => window.matchMedia?.("(pointer: fine)").matches ?? true;
 
-export function Pos({ userId, frecuentes }: { userId: string; frecuentes: PosProduct[] }) {
+/** navigator.onLine como estado de React (eventos online/offline del navegador). */
+function suscribirConexion(avisar: () => void) {
+  window.addEventListener("online", avisar);
+  window.addEventListener("offline", avisar);
+  return () => {
+    window.removeEventListener("online", avisar);
+    window.removeEventListener("offline", avisar);
+  };
+}
+const enLinea = () => navigator.onLine;
+const enLineaServidor = () => true;
+
+export function Pos({ userId, esDueno, frecuentes }: { userId: string; esDueno: boolean; frecuentes: PosProduct[] }) {
   const storageKey = `pos:carrito:${userId}`;
   // Los más vendidos se fijan al cargar la página: no cambian de orden mientras
   // se vende (el orden se actualiza al recargar). Su stock sí se refresca
@@ -195,9 +208,22 @@ export function Pos({ userId, frecuentes }: { userId: string; frecuentes: PosPro
     });
   }
 
+  const conectado = useSyncExternalStore(suscribirConexion, enLinea, enLineaServidor);
+
   return (
     <div className="flex flex-col gap-6 pb-24 lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:pb-0">
-      <SearchPanel inputRef={searchRef} frecuentes={frecuentesFijos} lines={cart.lines} onAdd={onAdd} />
+      {conectado ? null : (
+        // Solo avisa: no se guarda nada sin conexión. El carrito sigue en este
+        // dispositivo y, al volver la red, se cobra normal (con la misma clave).
+        <p
+          role="status"
+          className="flex items-start gap-2 rounded-[var(--radius-control)] border border-border bg-surface-muted px-3 py-2.5 text-sm lg:col-span-2"
+        >
+          <WifiOff aria-hidden className="mt-0.5 size-4 shrink-0 text-muted" />
+          <span>Sin internet. Puedes seguir armando la venta; cobra cuando vuelva la conexión.</span>
+        </p>
+      )}
+      <SearchPanel inputRef={searchRef} esDueno={esDueno} frecuentes={frecuentesFijos} lines={cart.lines} onAdd={onAdd} />
 
       <CartPanel
         open={sheetOpen}

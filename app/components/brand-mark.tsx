@@ -34,7 +34,7 @@ export function BrandMark({
         src={url}
         alt={config.nombre}
         height={size}
-        className="w-auto shrink-0 object-contain object-left"
+        className="logo-ficha w-auto shrink-0 object-contain object-left"
         style={{ height: size, maxWidth: size * 3 }}
       />
     );

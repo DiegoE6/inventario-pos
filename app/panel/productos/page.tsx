@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Download, PackageSearch, Plus, Upload } from "lucide-react";
+import { EstadoVacio } from "@/app/components/estado";
 import { PageHeader } from "@/app/components/page-header";
 import { ProductCard } from "@/app/components/product-card";
 import { buttonClasses } from "@/app/components/ui/button";
@@ -82,25 +83,58 @@ export default async function ProductosPage({ searchParams }: PageProps<"/panel/
       />
 
       {productos.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface px-6 py-12 text-center">
-          <PackageSearch aria-hidden className="size-8 text-muted" />
-          <p className="text-base font-medium">
-            {total > 0
-              ? "No hay productos en esta página."
-              : filtrando
-                ? "Ningún producto coincide con la búsqueda."
-                : "Todavía no hay productos."}
-          </p>
-          {total > 0 ? (
-            <Link href="/panel/productos" className={buttonClasses({ variant: "secondary" })}>
-              Ir a la primera página
-            </Link>
-          ) : !filtrando && esDueno ? (
-            <Link href="/panel/productos/nuevo" className={buttonClasses()}>
-              Agregar el primero
-            </Link>
-          ) : null}
-        </div>
+        total > 0 ? (
+          <EstadoVacio
+            icon={PackageSearch}
+            titulo="No hay productos en esta página"
+            acciones={
+              <Link href="/panel/productos" className={buttonClasses({ variant: "secondary" })}>
+                Ir a la primera página
+              </Link>
+            }
+          />
+        ) : filtrando ? (
+          <EstadoVacio
+            icon={PackageSearch}
+            titulo={query.q ? `Ningún producto coincide con «${query.q}»` : "No hay productos en esta categoría"}
+            acciones={
+              <>
+                <Link href="/panel/productos" className={buttonClasses({ variant: "secondary" })}>
+                  Quitar filtros
+                </Link>
+                {esDueno ? (
+                  <Link href="/panel/productos/nuevo" className={buttonClasses()}>
+                    <Plus aria-hidden className="size-[18px]" />
+                    Nuevo producto
+                  </Link>
+                ) : null}
+              </>
+            }
+          >
+            Revisa cómo está escrito o busca por código.
+          </EstadoVacio>
+        ) : (
+          <EstadoVacio
+            icon={PackageSearch}
+            titulo="Todavía no tienes productos"
+            acciones={
+              esDueno ? (
+                <>
+                  <Link href="/panel/productos/nuevo" className={buttonClasses()}>
+                    <Plus aria-hidden className="size-[18px]" />
+                    Agregar el primero
+                  </Link>
+                  <Link href="/panel/productos/importar" className={buttonClasses({ variant: "secondary" })}>
+                    <Upload aria-hidden className="size-[18px]" />
+                    Importar desde Excel
+                  </Link>
+                </>
+              ) : null
+            }
+          >
+            {esDueno ? "Agrégalos uno por uno o carga tu lista completa desde Excel." : "El dueño todavía no ha dado de alta productos."}
+          </EstadoVacio>
+        )
       ) : (
         <>
           <p className="text-sm text-muted tabular-nums" aria-live="polite">
@@ -132,11 +166,12 @@ export default async function ProductosPage({ searchParams }: PageProps<"/panel/
               </thead>
               <tbody className="divide-y divide-border">
                 {productos.map((p) => (
-                  <tr key={p.id} className={`transition-colors duration-150 hover:bg-surface-muted ${p.activo ? "" : "opacity-60"}`}>
+                  <tr key={p.id} className={`relative transition-colors duration-150 hover:bg-surface-muted ${p.activo ? "" : "opacity-60"}`}>
                     <td className="px-4 py-3">
                       <Link
                         href={`/panel/productos/${p.id}`}
-                        className="font-medium text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+                        // Enlace estirado: toda la fila abre el producto (un solo enlace para el teclado).
+                        className="font-medium text-foreground after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
                       >
                         {p.nombre}
                       </Link>

@@ -130,7 +130,7 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
           <h2 className="text-lg font-semibold">Historial</h2>
           <Link
             href={`/panel/inventario${q}`}
-            className="text-sm font-medium text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+            className="-my-2 -mr-2 inline-flex min-h-11 items-center rounded-md px-2 text-sm font-medium text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
           >
             Ver todo
           </Link>

@@ -19,6 +19,6 @@ const Pos = dynamic(() => import("./pos").then((m) => m.Pos), {
   ),
 });
 
-export function PosLoader(props: { userId: string; frecuentes: PosProduct[] }) {
+export function PosLoader(props: { userId: string; esDueno: boolean; frecuentes: PosProduct[] }) {
   return <Pos {...props} />;
 }

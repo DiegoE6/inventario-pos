@@ -9,6 +9,7 @@
 
 -- -----------------------------------------------------------------------------
 -- v_stock_bajo: productos activos con stock <= stock mínimo.
+-- proporcion (desde 30): stock ÷ mínimo, 0 = agotado; ordena por urgencia.
 -- -----------------------------------------------------------------------------
 create or replace view public.v_stock_bajo
 with (security_invoker = true)
@@ -24,7 +25,8 @@ select
   p.categoria_id,
   c.nombre as categoria,
   p.proveedor_id,
-  pr.nombre as proveedor
+  pr.nombre as proveedor,
+  case when p.stock_minimo > 0 then round(p.stock / p.stock_minimo, 4) else 0 end::numeric(12,4) as proporcion
 from public.productos p
 left join public.categorias c on c.id = p.categoria_id
 left join public.proveedores pr on pr.id = p.proveedor_id

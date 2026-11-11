@@ -1,5 +1,8 @@
 "use client";
 
+import { SearchX } from "lucide-react";
+import { EstadoVacio } from "@/app/components/estado";
+import { Button } from "@/app/components/ui/button";
 import type { PosProduct } from "@/app/lib/cart";
 import { formatQuantity } from "@/app/lib/format";
 import { ProductSearchInput } from "./search-input";
@@ -37,9 +40,17 @@ export function ProductPicker({
       ) : null}
 
       {results && results.length === 0 && !loading ? (
-        <p className="rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface px-4 py-6 text-center text-base text-muted">
-          Ningún producto coincide con “{q.trim()}”.
-        </p>
+        <EstadoVacio
+          icon={SearchX}
+          titulo={`Ningún producto coincide con «${q.trim()}»`}
+          acciones={
+            <Button variant="secondary" onClick={() => search.limpiar()}>
+              Limpiar búsqueda
+            </Button>
+          }
+        >
+          Revisa el código o búscalo por nombre.
+        </EstadoVacio>
       ) : results ? (
         <ul className="divide-y divide-border overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface">
           {results.map((p) => (
