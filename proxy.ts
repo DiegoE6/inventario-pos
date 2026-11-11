@@ -2,9 +2,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { env } from "@/app/lib/env";
 import { safeNext } from "@/app/lib/safe-next";
+import { buildCsp, newNonce } from "@/app/lib/csp";
 
 /**
- * Proxy (Next 16; antes "middleware"). Dos tareas:
+ * Proxy (Next 16; antes "middleware"). Tres tareas:
+ *
+ *   0. Content Security Policy con un nonce nuevo en cada petición (ver
+ *      app/lib/csp.ts). Va en la petición (Next lee de ahí el nonce para sus
+ *      scripts) y en la respuesta (la que aplica el navegador). Corre en todas
+ *      las páginas, también en /login y en los 404.
  *
  *   1. Renovar la sesión de Supabase y escribir las cookies nuevas en la
  *      respuesta. Los Server Components no pueden escribir cookies, así que
@@ -18,7 +24,25 @@ import { safeNext } from "@/app/lib/safe-next";
 const API_PATHS = ["/panel/vender/productos"];
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const csp = buildCsp(newNonce(), env.supabaseUrl, process.env.NODE_ENV === "development");
+
+  // Se arma cada vez que hace falta: setAll cambia las cookies de la petición
+  // y la copia de los encabezados tiene que llevar las nuevas.
+  const next = () => {
+    const headers = new Headers(request.headers);
+    headers.set("content-security-policy", csp);
+    const res = NextResponse.next({ request: { headers } });
+    res.headers.set("content-security-policy", csp);
+    return res;
+  };
+
+  const { pathname, searchParams } = request.nextUrl;
+  const isLogin = pathname === "/login";
+  const isPanel = pathname === "/panel" || pathname.startsWith("/panel/");
+  // Fuera del panel y del login (404, /dev/…) solo hace falta la CSP.
+  if (!isPanel && !isLogin) return next();
+
+  let response = next();
 
   const supabase = createServerClient(env.supabaseUrl, env.supabasePublishableKey, {
     cookies: {
@@ -27,7 +51,7 @@ export async function proxy(request: NextRequest) {
       },
       setAll(cookiesToSet, headers) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = next();
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
         );
@@ -43,8 +67,6 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const hasSession = Boolean(data?.claims?.sub);
 
-  const { pathname, searchParams } = request.nextUrl;
-  const isLogin = pathname === "/login";
   // Endpoints de datos (fetch desde el cliente): no se redirigen; el propio
   // Route Handler responde 401 y el cliente manda al login.
   const isApi = API_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -80,5 +102,9 @@ function redirectWithCookies(url: URL, from: NextResponse) {
 }
 
 export const config = {
-  matcher: ["/panel/:path*", "/login"],
+  // Todo menos archivos estáticos: _next/static, _next/image, favicon, las
+  // imágenes con extensión y /api (la señal de vida del cron responde JSON).
+  matcher: [
+    "/((?!api/|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico)$).*)",
+  ],
 };
