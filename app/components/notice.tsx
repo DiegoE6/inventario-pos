@@ -7,7 +7,7 @@ export function Notice({ tone, children }: { tone: "success" | "danger"; childre
   return (
     <p
       role={tone === "danger" ? "alert" : "status"}
-      className={`flex items-start gap-2 rounded-[var(--radius-control)] px-3 py-2.5 text-sm ${
+      className={`aviso flex items-start gap-2 rounded-[var(--radius-control)] px-3 py-2.5 text-sm ${
         tone === "success" ? "bg-success-soft text-success" : "bg-danger-soft text-danger"
       }`}
     >

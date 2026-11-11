@@ -435,7 +435,8 @@ grant execute on function public.reporte_por_metodo(date, date) to authenticated
 -- 9. reporte_sin_movimiento: productos activos con stock que no se vendieron
 -- en el periodo (ventas completadas), del que más dinero tiene detenido
 -- (stock × costo) al que menos. ultima_venta: la última venta completada del
--- producto, cuando sea (null si nunca se ha vendido).
+-- producto, cuando sea (null si nunca se ha vendido). Desde 30, solo los que
+-- ya existían el primer día del rango (día de Monterrey).
 -- -----------------------------------------------------------------------------
 create or replace function public.reporte_sin_movimiento(
   p_desde  date,
@@ -479,6 +480,8 @@ begin
   left join public.categorias c on c.id = p.categoria_id
   where p.activo
     and p.stock > 0
+    -- Ya existía cuando empezó el rango (inicio del día p_desde en Monterrey).
+    and p.creado_en < r.desde
     and not exists (
       select 1
       from public.venta_detalle d

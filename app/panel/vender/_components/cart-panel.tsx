@@ -71,7 +71,7 @@ export function CartPanel({
     <section
       aria-label="Carrito"
       className={`${
-        open ? "fixed inset-0 z-50 flex" : "hidden"
+        open ? "hoja-carrito fixed inset-0 z-50 flex" : "hidden"
       } flex-col bg-background lg:sticky lg:top-6 lg:z-auto lg:flex lg:max-h-[calc(100dvh-3rem)] lg:rounded-[var(--radius-card)] lg:border lg:border-border lg:bg-surface`}
     >
       {/* Encabezado */}
@@ -321,7 +321,7 @@ function StepButton({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="flex size-11 items-center justify-center text-foreground transition-transform duration-150 ease-out motion-safe:active:scale-[0.9] disabled:opacity-40"
+      className="flex size-11 items-center justify-center text-foreground transition-transform duration-150 ease-out motion-safe:active:scale-[0.95] disabled:opacity-40"
     >
       {children}
     </button>

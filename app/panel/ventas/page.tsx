@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Download } from "lucide-react";
+import Link from "next/link";
+import { Download, Receipt } from "lucide-react";
+import { EstadoVacio } from "@/app/components/estado";
 import { Notice } from "@/app/components/notice";
 import { PageHeader } from "@/app/components/page-header";
 import { Pagination } from "@/app/components/pagination";
@@ -84,17 +86,42 @@ export default async function VentasPage({ searchParams }: PageProps<"/panel/ven
           </p>
         ) : null}
 
-        {error ? null : (
-          <VentaList
-            ventas={ventas}
-            vacio={
-              total > 0
-                ? "No hay ventas en esta página."
-                : hayFiltros
-                  ? "No hay ventas con estos filtros."
-                  : "No hay ventas en los últimos 7 días. Cambia las fechas para ver otras."
+        {error ? null : ventas.length > 0 ? (
+          <VentaList ventas={ventas} vacio="" />
+        ) : total > 0 ? (
+          <EstadoVacio
+            icon={Receipt}
+            titulo="No hay ventas en esta página"
+            acciones={
+              <Link href={href(query, 1)} className={buttonClasses({ variant: "secondary" })}>
+                Ir a la primera página
+              </Link>
             }
           />
+        ) : hayFiltros ? (
+          <EstadoVacio
+            icon={Receipt}
+            titulo="No hay ventas con estos filtros"
+            acciones={
+              <Link href="/panel/ventas" className={buttonClasses({ variant: "secondary" })}>
+                Quitar filtros
+              </Link>
+            }
+          >
+            Prueba con otras fechas, otro estado o cualquier método de pago.
+          </EstadoVacio>
+        ) : (
+          <EstadoVacio
+            icon={Receipt}
+            titulo="No hay ventas en los últimos 7 días"
+            acciones={
+              <Link href="/panel/vender" className={buttonClasses()}>
+                Ir a Vender
+              </Link>
+            }
+          >
+            Cuando cobres, aquí aparece cada venta con su ticket. Para ver otras fechas, cambia el rango.
+          </EstadoVacio>
         )}
 
         <Pagination pagina={query.pagina} paginas={paginas} href={(n) => href(query, n)} />

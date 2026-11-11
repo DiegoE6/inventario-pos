@@ -45,7 +45,7 @@ export function MovimientoList({
         const unidad = m.producto?.unidad ?? "pieza";
         const positivo = m.cantidad > 0;
         return (
-          <li key={m.id} className="flex flex-col gap-1 px-4 py-3">
+          <li key={m.id} className="relative flex flex-col gap-1 px-4 py-3">
             <div className="flex items-start gap-3">
               <span className={`mt-0.5 inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs font-semibold ${TIPO_CLASS[m.tipo]}`}>
                 {TIPO_LABEL[m.tipo]}
@@ -54,7 +54,8 @@ export function MovimientoList({
                 {showProducto && m.producto ? (
                   <Link
                     href={`/panel/productos/${m.producto.id}`}
-                    className="line-clamp-2 text-base font-medium leading-snug hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+                    // Enlace estirado: toda la fila es el área táctil (un solo enlace para el teclado).
+                    className="line-clamp-2 text-base font-medium leading-snug after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
                   >
                     {m.producto.nombre}
                   </Link>

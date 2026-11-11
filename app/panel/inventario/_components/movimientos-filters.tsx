@@ -29,10 +29,13 @@ export function MovimientosFilters({
   current,
   productoNombre,
   hoy,
+  sinResultados = false,
 }: {
   current: Filtros;
   productoNombre: string | null;
   hoy: string;
+  /** Sin resultados, el estado vacío ya trae "Quitar filtros": no lo repetimos aquí. */
+  sinResultados?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -133,11 +136,11 @@ export function MovimientosFilters({
             <LoaderCircle aria-hidden className="size-4 animate-spin" /> Actualizando…
           </span>
         ) : null}
-        {hayFiltros ? (
+        {hayFiltros && !sinResultados ? (
           <button
             type="button"
             onClick={() => navigate({ desde: "", hasta: "", tipo: "", producto: "" })}
-            className="ml-auto font-medium text-primary-ink hover:underline"
+            className="-my-2 ml-auto inline-flex min-h-11 items-center rounded-md px-2 font-medium text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
           >
             Quitar filtros
           </button>

@@ -47,7 +47,7 @@ export function RangePicker({
               type="button"
               aria-pressed={actual}
               onClick={() => go({ rango: a.valor })}
-              className={`flex h-9 items-center justify-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary-ink ${
+              className={`flex h-10 items-center justify-center rounded-[8px] px-3 text-sm font-medium transition-[transform,background-color,color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-primary-ink ${
                 actual ? "bg-surface text-foreground shadow-sm" : "text-muted hover:text-foreground"
               }`}
             >

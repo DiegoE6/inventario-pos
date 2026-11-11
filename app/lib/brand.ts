@@ -81,24 +81,92 @@ export function primaryInkMuted(ink: string): string {
   return ink;
 }
 
+// -----------------------------------------------------------------------------
+// Modo oscuro. Superficies oscuras (deben coincidir con globals.css).
+// -----------------------------------------------------------------------------
+const DARK_SURFACES = ["#0c0a09", "#1c1917", "#292524"];
+const DARK_SURFACE = "#1c1917";
+
+/**
+ * Tinta para fondo oscuro: el primario ACLARADO hasta ≥ 4.6:1 sobre las
+ * superficies oscuras y sobre su propio fondo suave (~16 % sobre la tarjeta).
+ * Es el equivalente de primaryInk, pero al revés.
+ */
+export function primaryInkOscuro(hex: string): string {
+  for (let paso = 0; paso <= 50; paso++) {
+    const c = mix(hex, "#ffffff", paso / 50);
+    const fondos = [...DARK_SURFACES, mix(DARK_SURFACE, c, 0.16)];
+    if (fondos.every((f) => contrastRatio(c, f) >= 4.6)) return c;
+  }
+  return "#fafaf9";
+}
+
+/** Tinta atenuada en oscuro: la tinta hacia la superficie, sin bajar de 3:1. */
+export function primaryInkMutedOscuro(ink: string): string {
+  for (let paso = 30; paso >= 0; paso--) {
+    const c = mix(ink, DARK_SURFACE, paso / 50);
+    if (DARK_SURFACES.every((f) => contrastRatio(c, f) >= 3.1)) return c;
+  }
+  return ink;
+}
+
+/**
+ * Relleno de botones en oscuro: el primario tal cual si ya se distingue de
+ * las superficies oscuras (≥ 3:1, WCAG 1.4.11); si no (un azul marino),
+ * aclarado lo justo. El texto encima se vuelve a elegir (blanco o negro).
+ */
+export function primaryOscuro(hex: string): string {
+  for (let paso = 0; paso <= 50; paso++) {
+    const c = mix(hex, "#ffffff", paso / 50);
+    if (DARK_SURFACES.slice(0, 2).every((f) => contrastRatio(c, f) >= 3)) return c;
+  }
+  return hex;
+}
+
 /** Color de marca validado (o el de por defecto), en minúsculas. */
 export function safePrimary(color: unknown): string {
   return isHexColor(color) ? color.toLowerCase() : DEFAULT_PRIMARY;
 }
 
+/** Todas las versiones del color de marca: claro y oscuro. */
+export function paletaMarca(color: unknown) {
+  const primary = safePrimary(color);
+  const ink = primaryInk(primary);
+  const primaryDark = primaryOscuro(primary);
+  const inkDark = primaryInkOscuro(primary);
+  return {
+    primary,
+    onPrimary: onColorFor(primary),
+    ink,
+    inkMuted: primaryInkMuted(ink),
+    primaryDark,
+    onPrimaryDark: onColorFor(primaryDark),
+    inkDark,
+    inkMutedDark: primaryInkMutedOscuro(inkDark),
+  };
+}
+
 /**
- * Variables CSS de marca para el `style` del elemento con `data-brand`.
+ * Variables CSS de marca para el `style` del elemento con `data-brand`
+ * (`<html>` y la vista previa de Configuración). Son `--brand-…`, con las dos
+ * versiones: globals.css elige la clara o la oscura y las pasa a los tokens
+ * `--color-primary…`. (Un style en línea le gana a cualquier regla CSS: si
+ * aquí se escribiera --color-primary-ink, el modo oscuro no podría cambiarlo.)
+ *
  * Si el color no es un #RRGGBB válido, usa el de por defecto: nunca se mete
  * a `style` un valor que no se haya validado.
  */
 export function brandStyle(color: unknown): CSSProperties {
-  const primary = safePrimary(color);
-  const ink = primaryInk(primary);
+  const p = paletaMarca(color);
   return {
-    "--color-primary": primary,
-    "--color-on-primary": onColorFor(primary),
-    "--color-primary-ink": ink,
-    "--color-primary-ink-muted": primaryInkMuted(ink),
+    "--brand-primary": p.primary,
+    "--brand-on-primary": p.onPrimary,
+    "--brand-ink": p.ink,
+    "--brand-ink-muted": p.inkMuted,
+    "--brand-primary-oscuro": p.primaryDark,
+    "--brand-on-primary-oscuro": p.onPrimaryDark,
+    "--brand-ink-oscuro": p.inkDark,
+    "--brand-ink-muted-oscuro": p.inkMutedDark,
   } as CSSProperties;
 }
 

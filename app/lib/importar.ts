@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { mensajeCelda } from "@/app/lib/excel/formulas";
 import { quitarApostrofo } from "@/app/lib/excel/seguro";
 import { MAX_FILAS, type Hoja } from "@/app/lib/excel/leer";
 import type { Unidad } from "@/app/lib/format";
@@ -286,10 +287,23 @@ export async function prepararImportacion(hoja: Hoja): Promise<Vista> {
     );
   }
 
+  // Celdas con fórmula que se leyeron vacías, por fila (solo columnas que se usan).
+  const campoDeColumna = new Map([...indice].map(([campo, col]) => [col, campo]));
+  const sinResultado = new Map<number, { campo: Campo; mensaje: string }[]>();
+  for (const c of hoja.sinResultado ?? []) {
+    const campo = campoDeColumna.get(c.columna);
+    if (!campo || c.fila < 2) continue;
+    const lista = sinResultado.get(c.fila) ?? [];
+    lista.push({ campo, mensaje: mensajeCelda(c, TITULOS[campo]) });
+    sinResultado.set(c.fila, lista);
+  }
+
   // 2. Filas con datos (las vacías no cuentan). La fila 1 es el encabezado.
+  // Una fila cuyas celdas son fórmulas sin resultado se lee vacía, pero sí
+  // tiene datos: se queda para avisarlo.
   const filas = resto
     .map((celdas, i) => ({ fila: i + 2, celdas }))
-    .filter((f) => f.celdas.some((c) => c.trim() !== ""));
+    .filter((f) => f.celdas.some((c) => c.trim() !== "") || sinResultado.has(f.fila));
   if (filas.length === 0) throw new ImportacionInvalida("El archivo no tiene productos debajo del encabezado.");
   if (filas.length > MAX_FILAS) {
     throw new ImportacionInvalida(`El archivo tiene ${filas.length} productos; el máximo es ${MAX_FILAS} por archivo.`);
@@ -309,7 +323,14 @@ export async function prepararImportacion(hoja: Hoja): Promise<Vista> {
       CAMPOS.map((c) => [c, indice.has(c) ? quitarApostrofo(celdas[indice.get(c)!] ?? "") : ""])
     ) as Valores;
     const r = filaSchema.safeParse(valores);
-    const motivos = r.success ? [] : [...new Set(r.error.issues.map((i) => i.message))];
+    // Si una columna tiene fórmula sin resultado, su aviso reemplaza al de zod
+    // ("Falta el precio" confundiría: en Excel sí se ve un precio).
+    const formulas = sinResultado.get(fila) ?? [];
+    const conFormula = new Set<string>(formulas.map((f) => f.campo));
+    const motivos = [
+      ...formulas.map((f) => f.mensaje),
+      ...(r.success ? [] : [...new Set(r.error.issues.filter((i) => !conFormula.has(String(i.path[0]))).map((i) => i.message))]),
+    ];
     const codigo = valores.codigo.trim();
     if (codigo) {
       const previa = primeraDelCodigo.get(codigo);

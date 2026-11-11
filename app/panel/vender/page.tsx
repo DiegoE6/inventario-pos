@@ -23,7 +23,7 @@ export default async function VenderPage() {
   return (
     <>
       <h1 className="sr-only">Vender</h1>
-      <PosLoader userId={session.userId} frecuentes={frecuentes} />
+      <PosLoader userId={session.userId} esDueno={session.rol === "dueno"} frecuentes={frecuentes} />
     </>
   );
 }

@@ -98,7 +98,7 @@ export function VentasFilters({
             <button
               type="button"
               onClick={() => navigate({ desde: "", hasta: "", estado: "", metodo: "" })}
-              className="ml-auto font-medium text-primary-ink hover:underline"
+              className="-my-2 ml-auto inline-flex min-h-11 items-center rounded-md px-2 font-medium text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
             >
               Últimos 7 días, sin filtros
             </button>

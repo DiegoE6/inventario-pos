@@ -88,7 +88,7 @@ export function ProductFilters({
                 setQ("");
                 navigate({ q: "" });
               }}
-              className="flex size-8 items-center justify-center rounded-full text-muted hover:bg-surface-muted"
+              className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-surface-muted focus-visible:outline-2 focus-visible:outline-primary-ink"
             >
               <X aria-hidden className="size-4" />
             </button>

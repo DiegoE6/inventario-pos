@@ -1,6 +1,10 @@
 "use client";
 
 import type { Ref } from "react";
+import Link from "next/link";
+import { SearchX } from "lucide-react";
+import { EstadoVacio } from "@/app/components/estado";
+import { Button, buttonClasses } from "@/app/components/ui/button";
 import { ProductSearchInput } from "@/app/components/product-search/search-input";
 import { useProductSearch } from "@/app/components/product-search/use-product-search";
 import { cantidadEnCarrito, type CartLine, type PosProduct } from "@/app/lib/cart";
@@ -13,11 +17,14 @@ import { formatMoney, formatQuantity } from "@/app/lib/format";
  */
 export function SearchPanel({
   inputRef,
+  esDueno,
   frecuentes,
   lines,
   onAdd,
 }: {
   inputRef: Ref<HTMLInputElement>;
+  /** El dueño puede dar de alta el código que no se encontró. */
+  esDueno: boolean;
   frecuentes: PosProduct[];
   lines: CartLine[];
   onAdd: (p: PosProduct, opts?: { fromScan?: boolean }) => void;
@@ -49,9 +56,31 @@ export function SearchPanel({
       {titulo ? <h2 className="text-sm font-medium text-muted">{titulo}</h2> : null}
 
       {results && results.length === 0 && !loading ? (
-        <p className="rounded-[var(--radius-card)] border border-dashed border-border-strong bg-surface px-4 py-8 text-center text-base text-muted">
-          Ningún producto coincide con “{q.trim()}”.
-        </p>
+        <EstadoVacio
+          icon={SearchX}
+          titulo={`Ningún producto coincide con «${q.trim()}»`}
+          acciones={
+            <>
+              <Button variant="secondary" onClick={() => search.limpiar()}>
+                Limpiar búsqueda
+              </Button>
+              {esDueno ? (
+                <Link
+                  href={
+                    /^\S{1,50}$/.test(q.trim())
+                      ? `/panel/productos/nuevo?codigo=${encodeURIComponent(q.trim())}`
+                      : "/panel/productos/nuevo"
+                  }
+                  className={buttonClasses({ variant: "secondary" })}
+                >
+                  Dar de alta
+                </Link>
+              ) : null}
+            </>
+          }
+        >
+          Revisa el código o búscalo por nombre.
+        </EstadoVacio>
       ) : (
         <ul className="grid gap-2 sm:grid-cols-2">
           {lista.map((p) => (

@@ -8,6 +8,9 @@ import { inflateRawSync } from "node:zlib";
  * Se lee el directorio central y se descomprime cada parte con
  * maxOutputLength: el límite lo aplica zlib, no lo que el archivo dice de sí
  * mismo. Si algo no cuadra, el archivo se rechaza.
+ *
+ * Regresa las partes ya descomprimidas (nombre → contenido), para revisar
+ * el XML sin volver a abrir el archivo (ver formulas.ts).
  */
 
 export const MAX_PARTES = 100;
@@ -19,7 +22,8 @@ const EOCD = 0x06054b50;
 const CENTRAL = 0x02014b50;
 const LOCAL = 0x04034b50;
 
-export function revisarZip(buf: Buffer): void {
+export function revisarZip(buf: Buffer): Map<string, Buffer> {
+  const contenidos = new Map<string, Buffer>();
   // Fin del directorio central: en los últimos 22 + 65535 bytes (comentario).
   let eocd = -1;
   for (let i = buf.length - 22; i >= Math.max(0, buf.length - 22 - 65535); i--) {
@@ -48,6 +52,7 @@ export function revisarZip(buf: Buffer): void {
     const largoExtra = buf.readUInt16LE(p + 30);
     const largoComentario = buf.readUInt16LE(p + 32);
     const local = buf.readUInt32LE(p + 42);
+    const nombre = buf.subarray(p + 46, p + 46 + largoNombre).toString("utf8");
     p += 46 + largoNombre + largoExtra + largoComentario;
 
     if (local + 30 > buf.length || buf.readUInt32LE(local) !== LOCAL) throw new ZipInvalido("El archivo está dañado.");
@@ -55,22 +60,24 @@ export function revisarZip(buf: Buffer): void {
     if (datos + comprimido > buf.length) throw new ZipInvalido("El archivo está dañado.");
     const contenido = buf.subarray(datos, datos + comprimido);
 
-    let tam: number;
+    let parte: Buffer;
     if (metodo === 0) {
-      tam = contenido.length;
+      parte = contenido;
     } else if (metodo === 8) {
       const restante = MAX_DESCOMPRIMIDO - total;
       try {
-        tam = inflateRawSync(contenido, { maxOutputLength: Math.max(1, restante) }).length;
+        parte = inflateRawSync(contenido, { maxOutputLength: Math.max(1, restante) });
       } catch {
         throw new ZipInvalido("El archivo es demasiado grande al abrirlo (más de 20 MB) o está dañado.");
       }
     } else {
       throw new ZipInvalido("El archivo usa una compresión que no se acepta.");
     }
-    total += tam;
+    total += parte.length;
     if (total > MAX_DESCOMPRIMIDO) {
       throw new ZipInvalido("El archivo es demasiado grande al abrirlo (más de 20 MB).");
     }
+    contenidos.set(nombre, parte);
   }
+  return contenidos;
 }

@@ -64,9 +64,15 @@ export default async function InicioPage({ searchParams }: PageProps<"/panel">) 
         !rHoy ? (
           <span className="text-muted">{NO_CARGO}</span>
         ) : rHoy.numVentas === 0 ? (
-          <Link href="/panel/vender" className="font-medium text-primary-ink hover:underline">
-            Todavía no hay ventas hoy
-          </Link>
+          <span className="flex flex-wrap items-center gap-x-2">
+            <span className="text-muted">Todavía no hay ventas hoy</span>
+            <Link
+              href="/panel/vender"
+              className="-my-2 inline-flex min-h-11 items-center rounded-md font-medium text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
+            >
+              Ir a Vender
+            </Link>
+          </span>
         ) : esDueno ? (
           <Delta pct={cambioPct(rHoy.ventasCents, rAntes?.ventasCents)} dia={diaAntes} />
         ) : null

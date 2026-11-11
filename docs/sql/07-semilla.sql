@@ -93,6 +93,7 @@ declare
   v_turno    uuid;
   v_hoy      date := (now() at time zone 'America/Monterrey')::date;
   v_inicio   timestamptz;
+  v_alta     timestamptz;
   v_dia      date;
   v_abre     time;
   v_rango    interval;
@@ -156,6 +157,12 @@ begin
 
   perform setseed(0.42);
   v_inicio := ((v_hoy - 31) + time '08:00') at time zone 'America/Monterrey';
+  -- Alta de los productos: el último día del antepasado mes. Así "Sin
+  -- movimiento" (que desde 30 no cuenta productos dados de alta dentro del
+  -- rango) tiene datos en "Este mes" y en "Mes pasado".
+  v_alta := (((v_hoy - extract(day from v_hoy)::int)                          -- último día del mes pasado
+              - extract(day from (v_hoy - extract(day from v_hoy)::int))::int) -- último día del antepasado
+             + time '08:00') at time zone 'America/Monterrey';
 
   -- 3. Configuración ----------------------------------------------------------
   insert into public.configuracion_negocio (id, nombre, giro, logo_url, color_primario, telefono, direccion)
@@ -260,7 +267,7 @@ begin
   select overlay(overlay(md5('latuerca:producto:' || s.codigo) placing '4' from 13)
                  placing '8' from 17)::uuid,
          s.codigo, s.nombre, c.id, pr.id, s.unidad, s.costo, s.precio, s.stock_minimo,
-         v_inicio - interval '1 hour'
+         v_alta
   from pg_temp.semilla_productos s
   join public.categorias c on c.nombre = s.categoria
   join public.proveedores pr on pr.nombre = s.proveedor

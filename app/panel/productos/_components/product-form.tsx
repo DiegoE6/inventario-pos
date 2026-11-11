@@ -49,17 +49,20 @@ export function ProductForm({
   mode,
   action,
   initial,
+  codigoInicial,
   categorias,
   proveedores,
 }: {
   mode: "crear" | "editar";
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   initial: ProductFormValues;
+  /** Código para empezar (desde Vender, "Dar de alta"). Se combina aquí, en el cliente. */
+  codigoInicial?: string;
   categorias: Option[];
   proveedores: Option[];
 }) {
   const [state, formAction, pending] = useActionState(action, {});
-  const [v, setV] = useState(initial);
+  const [v, setV] = useState(() => (codigoInicial ? { ...initial, codigo: codigoInicial } : initial));
   const set =
     <K extends keyof ProductFormValues>(key: K) =>
     (value: ProductFormValues[K]) =>

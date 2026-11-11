@@ -2,7 +2,7 @@ import { stockStatus, type StockStatus } from "@/app/lib/stock";
 
 const styles: Record<Exclude<StockStatus, "ok">, { label: string; className: string }> = {
   // Urgente: rojo sólido, salta a la vista.
-  agotado: { label: "Agotado", className: "bg-danger text-white" },
+  agotado: { label: "Agotado", className: "bg-danger text-on-danger" },
   // Aviso: rojo suave, se nota sin gritar.
   bajo: { label: "Stock bajo", className: "bg-danger-soft text-danger" },
 };
