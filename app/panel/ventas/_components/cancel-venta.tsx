@@ -88,7 +88,7 @@ export function CancelVenta({
               className={`w-full rounded-[var(--radius-control)] border bg-surface px-3 py-2.5 text-base text-foreground transition-[border-color,box-shadow] duration-150 ease-out focus:outline-none focus:ring-2 ${
                 error
                   ? "border-danger focus:border-danger focus:ring-danger/20"
-                  : "border-border-strong focus:border-primary focus:ring-primary/20"
+                  : "border-border-strong focus:border-primary-ink focus:ring-primary/20"
               }`}
             />
           </Field>

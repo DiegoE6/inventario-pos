@@ -50,7 +50,7 @@ export function ProductCard({ product, href }: { product: ProductCardData; href?
   return (
     <Link
       href={href}
-      className={`${className} transition-[transform,border-color] duration-150 ease-out hover:border-border-strong motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+      className={`${className} transition-[transform,border-color] duration-150 ease-out hover:border-border-strong motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink ${
         product.activo === false ? "opacity-60" : ""
       }`}
     >

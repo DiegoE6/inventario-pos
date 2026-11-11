@@ -18,7 +18,7 @@ export function PageHeader({
       {back ? (
         <Link
           href={back.href}
-          className="-ml-1 inline-flex w-fit items-center gap-1 rounded-md px-1 py-1 text-sm text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary"
+          className="-ml-1 inline-flex w-fit items-center gap-1 rounded-md px-1 py-1 text-sm text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary-ink"
         >
           <ChevronLeft aria-hidden className="size-4" />
           {back.label}

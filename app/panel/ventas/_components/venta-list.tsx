@@ -61,7 +61,7 @@ export function VentaList({ ventas, vacio }: { ventas: VentaLista[]; vacio: stri
           <li key={v.id}>
             <Link
               href={`/panel/ventas/${v.id}`}
-              className="block px-4 py-3 transition-colors duration-150 ease-out hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+              className="block px-4 py-3 transition-colors duration-150 ease-out hover:bg-surface-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-ink"
             >
               {/* Celular */}
               <div className="flex flex-col gap-1 md:hidden">

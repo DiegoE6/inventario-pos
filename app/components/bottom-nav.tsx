@@ -29,7 +29,7 @@ export function BottomNav({ pathname, rol }: { pathname: string; rol: Rol }) {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={`flex h-full flex-col items-center justify-center gap-1 text-xs transition-colors duration-150 ${
-                  active ? "font-semibold text-primary" : "text-muted"
+                  active ? "font-semibold text-primary-ink" : "text-muted"
                 }`}
               >
                 <Icon aria-hidden className="size-[22px]" strokeWidth={active ? 2.25 : 1.75} />

@@ -131,7 +131,12 @@ export async function cobrar(input: CobroInput): Promise<CobroResult> {
         precio: Number(d.precio_unitario),
         importe: Number(d.importe),
       })),
-      negocio: { nombre: config.nombre, direccion: config.direccion, telefono: config.telefono },
+      negocio: {
+        nombre: config.nombre,
+        direccion: config.direccion,
+        telefono: config.telefono,
+        logo_url: config.logo_url,
+      },
       repetida: Boolean(previa),
     },
   };

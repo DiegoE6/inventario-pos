@@ -64,7 +64,7 @@ export default async function InicioPage({ searchParams }: PageProps<"/panel">) 
         !rHoy ? (
           <span className="text-muted">{NO_CARGO}</span>
         ) : rHoy.numVentas === 0 ? (
-          <Link href="/panel/vender" className="font-medium text-primary hover:underline">
+          <Link href="/panel/vender" className="font-medium text-primary-ink hover:underline">
             Todavía no hay ventas hoy
           </Link>
         ) : esDueno ? (
@@ -105,7 +105,7 @@ export default async function InicioPage({ searchParams }: PageProps<"/panel">) 
         {header}
         <Link
           href="/panel/vender"
-          className="flex h-16 w-full items-center justify-center gap-3 rounded-[var(--radius-card)] bg-primary text-lg font-semibold text-on-primary transition-[transform,background-color] duration-150 ease-out hover:bg-primary-hover motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="flex h-16 w-full items-center justify-center gap-3 rounded-[var(--radius-card)] bg-primary text-lg font-semibold text-on-primary transition-[transform,background-color] duration-150 ease-out hover:bg-primary-hover motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
         >
           <ShoppingCart aria-hidden className="size-6" />
           Vender
@@ -177,7 +177,7 @@ export default async function InicioPage({ searchParams }: PageProps<"/panel">) 
         footer={
           <span className="text-muted">
             {valor
-              ? `Lo que te costó la mercancía que tienes hoy · ${valor.productos} productos activos`
+              ? `Lo que te costó la mercancía que tienes hoy · ${valor.productos.toLocaleString("es-MX")} ${valor.productos === 1 ? "producto activo" : "productos activos"}`
               : NO_CARGO}
           </span>
         }

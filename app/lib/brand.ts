@@ -34,15 +34,108 @@ export function onColorFor(hex: string): string {
     : DARK_TEXT;
 }
 
+/** Fondos claros sobre los que aparece la tinta (deben coincidir con globals.css). */
+const SURFACES = ["#ffffff", "#fafaf9", "#f5f5f4"];
+
+function mix(hex: string, target: string, amount: number): string {
+  const out = [1, 3, 5].map((i) => {
+    const a = parseInt(hex.slice(i, i + 2), 16);
+    const b = parseInt(target.slice(i, i + 2), 16);
+    return Math.round(a + (b - a) * amount)
+      .toString(16)
+      .padStart(2, "0");
+  });
+  return `#${out.join("")}`;
+}
+
 /**
- * Variables CSS de marca para el `style` de un contenedor con `data-brand`.
+ * Tinta de marca: el primario oscurecido lo justo para leerse como texto
+ * (≥ 4.5:1, WCAG 1.4.3) sobre blanco, el fondo de la app, el gris de las
+ * tarjetas y el fondo suave del primario (`primary-soft`, ~10 % del color).
+ * Como texto cumple 4.5:1, también cumple el 3:1 de contornos de foco,
+ * bordes y barras de gráficas (WCAG 1.4.11). Si el primario ya contrasta,
+ * se usa tal cual.
+ */
+export function primaryInk(hex: string): string {
+  const fondos = [...SURFACES, mix(hex, "#ffffff", 0.9)];
+  // 4.6 en lugar de 4.5: margen para la mezcla en OKLab que hace el CSS.
+  const ok = (c: string) => fondos.every((f) => contrastRatio(c, f) >= 4.6);
+  for (let paso = 0; paso <= 50; paso++) {
+    const c = mix(hex, "#000000", paso / 50);
+    if (ok(c)) return c;
+  }
+  return DARK_TEXT;
+}
+
+/**
+ * Tinta atenuada: la tinta aclarada hacia blanco lo más posible sin bajar de
+ * 3:1 sobre los fondos claros (WCAG 1.4.11). Para marcas secundarias, como
+ * las barras no seleccionadas de una gráfica: se distinguen de la tinta y
+ * siguen siendo visibles.
+ */
+export function primaryInkMuted(ink: string): string {
+  for (let paso = 30; paso >= 0; paso--) {
+    const c = mix(ink, "#ffffff", paso / 50);
+    if (SURFACES.every((f) => contrastRatio(c, f) >= 3.1)) return c;
+  }
+  return ink;
+}
+
+/** Color de marca validado (o el de por defecto), en minúsculas. */
+export function safePrimary(color: unknown): string {
+  return isHexColor(color) ? color.toLowerCase() : DEFAULT_PRIMARY;
+}
+
+/**
+ * Variables CSS de marca para el `style` del elemento con `data-brand`.
  * Si el color no es un #RRGGBB válido, usa el de por defecto: nunca se mete
  * a `style` un valor que no se haya validado.
  */
 export function brandStyle(color: unknown): CSSProperties {
-  const primary = isHexColor(color) ? color.toLowerCase() : DEFAULT_PRIMARY;
+  const primary = safePrimary(color);
+  const ink = primaryInk(primary);
   return {
     "--color-primary": primary,
     "--color-on-primary": onColorFor(primary),
+    "--color-primary-ink": ink,
+    "--color-primary-ink-muted": primaryInkMuted(ink),
   } as CSSProperties;
+}
+
+/** Lo único que acepta configuracion_negocio.logo_url (CHECK de docs/sql/28). */
+export const LOGO_PATH_RE = /^\/storage\/v1\/object\/public\/marca\/logo\?v=\d+$/;
+
+/**
+ * URL completa del logo: la BD guarda solo la ruta relativa y aquí se le
+ * antepone la URL del proyecto. Cualquier otra cosa → null (sin logo).
+ */
+export function logoSrc(logoUrl: string | null | undefined, supabaseUrl: string): string | null {
+  if (!logoUrl || !LOGO_PATH_RE.test(logoUrl)) return null;
+  return `${supabaseUrl.replace(/\/+$/, "")}${logoUrl}`;
+}
+
+/**
+ * Nombre del negocio para nombres de archivo: sin acentos, solo a-z, 0-9 y
+ * guiones, máximo 40 caracteres. "" si no queda nada.
+ */
+export function slugNegocio(nombre: string | null | undefined): string {
+  return (nombre ?? "")
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/ñ/g, "n")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/g, "");
+}
+
+/**
+ * Nombre de un Excel exportado: "ferreteria-la-tuerca-ventas-2026-11-01-a-2026-11-11.xlsx".
+ * Sin nombre de negocio usable, solo el tipo y la fecha. `base` lo arma el
+ * código (tipo y fechas YYYY-MM-DD), nunca el usuario.
+ */
+export function nombreArchivo(nombreNegocio: string | null | undefined, base: string): string {
+  const slug = slugNegocio(nombreNegocio);
+  return `${slug ? `${slug}-` : ""}${base}.xlsx`;
 }

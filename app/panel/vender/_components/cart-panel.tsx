@@ -131,9 +131,9 @@ export function CartPanel({
                 role="radio"
                 aria-checked={active}
                 onClick={() => onMetodo(value)}
-                className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-control)] border text-[13px] font-medium transition-[transform,background-color,border-color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                className={`flex h-12 flex-col items-center justify-center gap-0.5 rounded-[var(--radius-control)] border text-[13px] font-medium transition-[transform,background-color,border-color] duration-150 ease-out motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink ${
                   active
-                    ? "border-primary bg-primary-soft text-primary"
+                    ? "border-primary-ink bg-primary-soft text-primary-ink"
                     : "border-border-strong bg-surface text-foreground"
                 }`}
               >
@@ -168,7 +168,7 @@ export function CartPanel({
                       onCobrar();
                     }
                   }}
-                  className="h-12 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-7 pr-3 text-right text-lg font-medium tabular-nums focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="h-12 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface pl-7 pr-3 text-right text-lg font-medium tabular-nums focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -222,7 +222,7 @@ function QuickAmount({ onClick, children }: { onClick: () => void; children: Rea
     <button
       type="button"
       onClick={onClick}
-      className="h-10 rounded-full border border-border-strong bg-surface px-3.5 text-sm font-medium tabular-nums transition-[transform,background-color] duration-150 ease-out hover:bg-surface-muted motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      className="h-10 rounded-full border border-border-strong bg-surface px-3.5 text-sm font-medium tabular-nums transition-[transform,background-color] duration-150 ease-out hover:bg-surface-muted motion-safe:active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink"
     >
       {children}
     </button>
@@ -257,7 +257,7 @@ function CartRow({
           type="button"
           onClick={() => onRemove(producto.id)}
           aria-label={`Quitar ${producto.nombre}`}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-primary"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-primary-ink"
         >
           <X aria-hidden className="size-[18px]" />
         </button>
@@ -283,7 +283,7 @@ function CartRow({
             onChange={(e) => onQty(producto.id, e.target.value.replace(",", "."))}
             onFocus={(e) => e.target.select()}
             aria-invalid={issue ? true : undefined}
-            className="h-11 w-16 border-x border-border-strong bg-transparent text-center text-base font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/30"
+            className="h-11 w-16 border-x border-border-strong bg-transparent text-center text-base font-medium tabular-nums focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-ink"
           />
           <StepButton label="Uno más" onClick={() => onQty(producto.id, stepQty(cantidad, producto.unidad, 1))}>
             <Plus aria-hidden className="size-[18px]" />

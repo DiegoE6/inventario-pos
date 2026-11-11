@@ -94,7 +94,7 @@ export default function MuestraPage() {
     <div data-brand style={brandStyle("#c2410c")} className="flex-1">
       <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 pb-32 pt-8 md:px-6">
         <header className="flex flex-col gap-2">
-          <p className="text-[13px] font-medium uppercase tracking-wide text-primary">
+          <p className="text-[13px] font-medium uppercase tracking-wide text-primary-ink">
             Solo desarrollo
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">Muestra visual</h1>

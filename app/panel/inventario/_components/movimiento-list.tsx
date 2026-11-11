@@ -15,7 +15,7 @@ const TIPO_CLASS: Record<TipoMovimiento, string> = {
   entrada: "bg-success-soft text-success",
   venta: "bg-surface-muted text-muted",
   merma: "bg-danger-soft text-danger",
-  ajuste: "bg-primary-soft text-primary",
+  ajuste: "bg-primary-soft text-primary-ink",
   cancelacion_venta: "bg-surface-muted text-foreground",
 };
 
@@ -54,7 +54,7 @@ export function MovimientoList({
                 {showProducto && m.producto ? (
                   <Link
                     href={`/panel/productos/${m.producto.id}`}
-                    className="line-clamp-2 text-base font-medium leading-snug hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+                    className="line-clamp-2 text-base font-medium leading-snug hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
                   >
                     {m.producto.nombre}
                   </Link>

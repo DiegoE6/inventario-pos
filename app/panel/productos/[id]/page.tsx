@@ -26,10 +26,11 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
   if (!producto) notFound();
 
   const back = { href: "/panel/productos", label: "Productos" };
-  // El costo solo se pide para el dueño (la BD se lo niega al cajero).
+  // El costo y los proveedores solo se piden para el dueño (la BD se los
+  // niega al cajero: proveedores, por RLS desde docs/sql/28).
   const [categorias, proveedores, costo] = await Promise.all([
     getCategorias(),
-    getProveedores(),
+    session.rol === "dueno" ? getProveedores() : Promise.resolve([]),
     session.rol === "dueno" ? getCostoProducto(producto.id) : Promise.resolve(null),
   ]);
   const categoria = categorias.find((c) => c.id === producto.categoria_id)?.nombre ?? null;
@@ -129,7 +130,7 @@ export default async function ProductoPage({ params, searchParams }: PageProps<"
           <h2 className="text-lg font-semibold">Historial</h2>
           <Link
             href={`/panel/inventario${q}`}
-            className="text-sm font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+            className="text-sm font-medium text-primary-ink hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
           >
             Ver todo
           </Link>

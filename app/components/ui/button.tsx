@@ -10,7 +10,7 @@ const base =
   // Respuesta al presionar (Emil): escala sutil, rápida, solo transform.
   "transition-[transform,background-color,border-color,color] duration-150 ease-out " +
   "motion-safe:active:scale-[0.97] " +
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink " +
   "disabled:pointer-events-none disabled:opacity-50";
 
 const variants: Record<ButtonVariant, string> = {

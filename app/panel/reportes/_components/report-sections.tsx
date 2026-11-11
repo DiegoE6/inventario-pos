@@ -18,7 +18,7 @@ function Barra({ valor, max }: { valor: number; max: number }) {
   return (
     <div aria-hidden className="h-1.5 rounded-full bg-surface-muted">
       {valor > 0 ? (
-        <div className="h-full rounded-full bg-primary/70" style={{ width: `max(${(valor / (max || 1)) * 100}%, 4px)` }} />
+        <div className="h-full rounded-full bg-primary-ink" style={{ width: `max(${(valor / (max || 1)) * 100}%, 4px)` }} />
       ) : null}
     </div>
   );
@@ -157,7 +157,7 @@ export function SinMovimientoList({ items, limite }: { items: SinMovimiento[]; l
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <Link
                 href={`/panel/productos/${p.productoId}`}
-                className="line-clamp-2 text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+                className="line-clamp-2 text-[15px] font-medium hover:underline focus-visible:outline-2 focus-visible:outline-primary-ink"
               >
                 {p.nombre}
               </Link>

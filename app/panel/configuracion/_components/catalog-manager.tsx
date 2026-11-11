@@ -226,7 +226,7 @@ function Fields({
                 <textarea
                   {...common}
                   rows={2}
-                  className="w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 py-2.5 text-base text-foreground transition-[border-color,box-shadow] duration-150 ease-out focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 py-2.5 text-base text-foreground transition-[border-color,box-shadow] duration-150 ease-out focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               ) : (
                 <Input

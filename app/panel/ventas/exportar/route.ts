@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { METODO_LABEL, type MetodoPago } from "@/app/components/ticket";
 import { requireDueno } from "@/app/lib/auth";
+import { nombreArchivo } from "@/app/lib/brand";
+import { getConfiguracion } from "@/app/lib/data";
 import { exportError, hoja, xlsxResponse } from "@/app/lib/excel/escribir";
 import { diasEnRango, MAX_DIAS } from "@/app/lib/reportes";
 import { createClient } from "@/app/lib/supabase/server";
@@ -119,5 +121,6 @@ export async function GET(request: NextRequest) {
     renglones
   );
 
-  return xlsxResponse([hojaVentas, hojaDetalle], `ventas_${desde}_a_${hasta}.xlsx`);
+  const config = await getConfiguracion();
+  return xlsxResponse([hojaVentas, hojaDetalle], nombreArchivo(config.nombre, `ventas-${desde}-a-${hasta}`));
 }

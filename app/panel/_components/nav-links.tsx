@@ -41,9 +41,9 @@ function SidebarLink({ item, active }: { item: (typeof MAIN_NAV)[number]; active
       <Link
         href={item.href}
         aria-current={active ? "page" : undefined}
-        className={`flex h-10 items-center gap-3 rounded-[var(--radius-control)] px-3 text-[15px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-primary ${
+        className={`flex h-10 items-center gap-3 rounded-[var(--radius-control)] px-3 text-[15px] transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-primary-ink ${
           active
-            ? "bg-primary-soft font-semibold text-primary"
+            ? "bg-primary-soft font-semibold text-primary-ink"
             : "text-muted hover:bg-surface-muted hover:text-foreground"
         }`}
       >

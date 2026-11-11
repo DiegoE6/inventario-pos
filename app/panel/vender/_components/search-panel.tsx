@@ -80,7 +80,7 @@ function ResultCard({
       type="button"
       disabled={agotado}
       onClick={() => onAdd(producto)}
-      className="flex min-h-[84px] w-full items-start gap-3 rounded-[var(--radius-card)] border border-border bg-surface p-3.5 text-left transition-[transform,border-color] duration-150 ease-out hover:border-border-strong motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex min-h-[84px] w-full items-start gap-3 rounded-[var(--radius-card)] border border-border bg-surface p-3.5 text-left transition-[transform,border-color] duration-150 ease-out hover:border-border-strong motion-safe:active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-ink disabled:cursor-not-allowed disabled:opacity-60"
     >
       <span className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="line-clamp-2 text-base font-medium leading-snug">{producto.nombre}</span>
@@ -97,7 +97,7 @@ function ResultCard({
       <span className="flex shrink-0 flex-col items-end gap-1">
         <span className="text-lg font-semibold tabular-nums">{formatMoney(producto.precio)}</span>
         {enCarrito ? (
-          <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary tabular-nums">
+          <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-ink tabular-nums">
             En carrito: {enCarrito}
           </span>
         ) : null}

@@ -1,3 +1,5 @@
+import { logoSrc } from "@/app/lib/brand";
+import { env } from "@/app/lib/env";
 import { formatMoney, formatQuantity, type Unidad } from "@/app/lib/format";
 import { TZ } from "@/app/lib/tz";
 
@@ -25,7 +27,7 @@ export type TicketData = {
   cambio: number;
   atendio: string;
   items: { nombre: string; unidad: Unidad; cantidad: number; precio: number; importe: number }[];
-  negocio: { nombre: string; direccion: string | null; telefono: string | null };
+  negocio: { nombre: string; direccion: string | null; telefono: string | null; logo_url: string | null };
   /** Reimpresión de una venta cancelada: el ticket lo dice arriba. */
   cancelada?: boolean;
 };
@@ -37,9 +39,16 @@ export function formatFolio(folio: number): string {
 }
 
 export function TicketContent({ ticket }: { ticket: TicketData }) {
+  // Solo la ruta del bucket `marca` (logoSrc rechaza cualquier otra cosa).
+  const logo = logoSrc(ticket.negocio.logo_url, env.supabaseUrl);
   return (
     <div className="ticket-print flex flex-col gap-3 font-mono text-[13px] leading-snug">
-      <div className="text-center">
+      <div className="flex flex-col items-center text-center">
+        {logo ? (
+          // Logo chico y en escala de grises: en papel térmico solo hay negro.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logo} alt="" className="ticket-logo mb-1.5 h-[12mm] w-auto max-w-[36mm] object-contain" />
+        ) : null}
         <p className="text-base font-bold">{ticket.negocio.nombre}</p>
         {ticket.negocio.direccion ? <p>{ticket.negocio.direccion}</p> : null}
         {ticket.negocio.telefono ? <p>Tel. {ticket.negocio.telefono}</p> : null}

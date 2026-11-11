@@ -18,7 +18,7 @@ const TIPOS = [
 ];
 
 const dateClass =
-  "h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-base text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20";
+  "h-11 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-base text-foreground focus:border-primary-ink focus:outline-none focus:ring-2 focus:ring-primary/20";
 
 /**
  * Filtros del historial en la URL (?desde=&hasta=&tipo=&producto=). Fechas en
@@ -91,7 +91,7 @@ export function MovimientosFilters({
 
       {current.producto ? (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-full bg-primary-soft py-1 pl-3.5 pr-1 text-sm font-medium text-primary">
+          <span className="inline-flex min-h-9 max-w-full items-center gap-1 rounded-full bg-primary-soft py-1 pl-3.5 pr-1 text-sm font-medium text-primary-ink">
             <span className="truncate">{productoNombre ?? "Producto"}</span>
             <button
               type="button"
@@ -137,7 +137,7 @@ export function MovimientosFilters({
           <button
             type="button"
             onClick={() => navigate({ desde: "", hasta: "", tipo: "", producto: "" })}
-            className="ml-auto font-medium text-primary hover:underline"
+            className="ml-auto font-medium text-primary-ink hover:underline"
           >
             Quitar filtros
           </button>

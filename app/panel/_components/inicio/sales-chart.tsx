@@ -143,7 +143,7 @@ export function SalesChart({
             onPointerLeave={() => {
               if (pointer.current === "mouse") setSel(null);
             }}
-            className="relative mt-5 h-44 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+            className="relative mt-5 h-44 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary-ink"
           >
             {/* Rejilla: dos líneas finas. Su monto va en el margen izquierdo,
                 fuera del área de las barras, para no taparlas. */}
@@ -180,7 +180,7 @@ export function SalesChart({
                   >
                     {d.ventasCents > 0 ? (
                       <div
-                        className={`w-full max-w-6 rounded-t-[4px] ${activo === null || i === activo ? "bg-primary" : "bg-primary/35"}`}
+                        className={`w-full max-w-6 rounded-t-[4px] ${activo === null || i === activo ? "bg-primary-ink" : "bg-primary-ink-muted"}`}
                         style={{ height: `max(${alto}%, 2px)` }}
                       />
                     ) : null}

@@ -24,7 +24,8 @@
 --      y recarga la semilla (configuración, catálogos, productos, ventas,
 --      movimientos y perfiles demo).
 --   4. avanzar_demo(): cobra con registrar_venta las ventas de hoy que ya
---      llegaron a su hora (ver 07).
+--      llegaron a su hora (ver 07). Si 28 está instalado, también restaura
+--      la marca del negocio 30 minutos después de su último cambio.
 --   5. pg_cron: reset-demo a las 03:00 de Monterrey (09:00 UTC) y
 --      ventas-demo cada minuto (una venta sale a lo más 1 minuto tarde).
 --
@@ -344,6 +345,18 @@ declare
   v_pago  numeric(12,2);
   v_n     int := 0;
 begin
+  -- Marca del negocio (28): si un prospecto la cambió hace 30 minutos o más,
+  -- vuelve a la original. Si 28 no está, no hace nada. Un error aquí no
+  -- detiene las ventas. (PL/pgSQL resuelve la llamada al ejecutarla: si 28
+  -- no está, esta línea nunca corre y no hace falta que la función exista.)
+  if to_regprocedure('privado.restaurar_marca_vencida(timestamp with time zone)') is not null then
+    begin
+      perform privado.restaurar_marca_vencida();
+    exception when others then
+      raise warning 'avanzar_demo: no se pudo revisar la marca (%).', sqlerrm;
+    end;
+  end if;
+
   -- Pendientes de días anteriores (si el job estuvo detenido): ya no se cobran.
   update privado.demo_ventas_pendientes
   set estado = 'omitida', motivo = 'Ya pasó su día.', aplicada_en = now()
