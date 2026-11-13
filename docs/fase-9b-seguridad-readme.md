@@ -36,11 +36,11 @@ Nonce nuevo en cada petición (128 bits aleatorios). Va en el encabezado de la p
 | `X-Frame-Options` | `DENY` (respaldo de `frame-ancestors` para navegadores viejos) |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `X-Content-Type-Options` | `nosniff` |
-| `Permissions-Policy` | `camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()` |
 
 Además, `poweredByHeader: false` (sin `X-Powered-By: Next.js`).
 
-**Cámara:** la app no usa la cámara hoy; el "escáner" es un lector de barras que escribe como teclado. `camera=(self)` deja la puerta abierta a un lector por cámara sin dársela a nadie más.
+**Cámara:** bloqueada como micrófono y ubicación. La app no la usa: el "escáner" es un lector de barras que escribe como teclado. (Al principio de la fase iba `camera=(self)`; Diego pidió bloquearla antes del merge.)
 
 ### Cómo se probó
 
@@ -56,7 +56,7 @@ Con el build de producción (`next build` + `next start` en el 3100). El 3000 no
   - login con correo y contraseña, cerrar sesión, login de demo;
   - las 19 pantallas del panel, más el 404 dentro del panel y el general;
   - Vender con el lector (código + Enter), cobrar con tarjeta, ticket e Imprimir (vista de impresión);
-  - Permissions-Policy: cámara permitida para la app; micrófono y ubicación, no;
+  - Permissions-Policy (con la versión anterior, `camera=(self)`): cámara permitida para la app; micrófono y ubicación, no. Con `camera=()` se volvió a revisar: cámara, micrófono y ubicación bloqueados;
   - logo: vista previa (`blob:`), guardado y la imagen de Storage en Inicio;
   - Excel: importar con errores, "Descargar filas con error", plantilla y exportar productos, ventas y reportes (5 archivos);
   - modo oscuro desde el selector, y pantallas en oscuro;
@@ -160,10 +160,12 @@ Al revisar el orden del README archivo por archivo, salió un problema: **`24-ve
   - 15 de 15 fallas intencionales detectadas.
 - **Datos que quedaron en el demo:**
   - 2 ventas del recorrido de CSP (folios 238 y 239, una pieza cada una, con tarjeta);
+  - al cambiar a `camera=()` (13 de noviembre) se repitió el recorrido en el build de producción, otra vez sin violaciones, y dejó la venta 228 (el reinicio nocturno la borra);
   - el logo de prueba se subió y la marca se restauró al final (Ferretería La Tuerca, `#c2410c`, sin logo).
 - **Supabase:** no hay que correr nada. El único cambio en SQL es el candado de `24`, que solo corre al instalar.
 
 ## Pendientes
 
 - **Diego:** probar el deploy de vista previa con la CSP antes del merge (login, Vender, logo, Excel).
+- Si se agrega lector por cámara, cambiar a `camera=(self)` en la `Permissions-Policy` (`next.config.ts`).
 - Fuera del alcance: página propia sin conexión (service worker) y lector de barras por cámara.

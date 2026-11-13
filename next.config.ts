@@ -11,10 +11,11 @@ const SECURITY_HEADERS = [
   // A otros sitios solo se manda el origen, nunca la ruta ni los filtros.
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  // Cámara solo para esta app (un lector por cámara en el futuro); lo demás, apagado.
+  // La app no usa cámara, micrófono, ubicación ni pagos: todo apagado. Si algún
+  // día se agrega un lector de barras por cámara, cambiar a camera=(self).
   {
     key: "Permissions-Policy",
-    value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
   },
 ];
 
