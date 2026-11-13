@@ -1,9 +1,10 @@
 -- =============================================================================
 -- 24-ventas-y-reportes.sql — Quién canceló cada venta y funciones de Reportes
--- Requiere: 01 a 23 y el 07-semilla.sql de esta fase (que ya llena
--- cancelada_por). Si la cargar_semilla instalada es la vieja, este script se
--- detiene antes de cambiar nada (paso 0): el reinicio de la demo tronaría con
--- el CHECK nuevo.
+-- Requiere: 01 a 23 y, si la base tiene la semilla del demo, el 07-semilla.sql
+-- de esta fase (que ya llena cancelada_por). Si la cargar_semilla instalada es
+-- la vieja, este script se detiene antes de cambiar nada (paso 0): el reinicio
+-- de la demo tronaría con el CHECK nuevo. En un cliente nuevo (sin 07) no hay
+-- semilla que revisar y sigue de largo.
 --
 -- 1. ventas.cancelada_por (→ perfiles). Se llena con lo que ya registró
 --    cancelar_venta en movimientos_inventario (usuario de los movimientos
@@ -25,13 +26,14 @@
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- 0. Candado: la semilla instalada debe llenar cancelada_por.
+-- 0. Candado: si hay semilla instalada, debe llenar cancelada_por.
 -- -----------------------------------------------------------------------------
 do $$
+declare
+  v_semilla regprocedure := to_regprocedure('privado.cargar_semilla(text, text, text)');
 begin
-  if to_regprocedure('privado.cargar_semilla(text, text, text)') is null
-     or pg_get_functiondef('privado.cargar_semilla(text, text, text)'::regprocedure)
-        not like '%cancelada_por%' then
+  -- Sin semilla (cliente nuevo, sin 07): no hay reinicio que pueda tronar.
+  if v_semilla is not null and pg_get_functiondef(v_semilla) not like '%cancelada_por%' then
     raise exception 'Corre primero el 07-semilla.sql nuevo: la semilla instalada cancela su venta de ejemplo sin cancelada_por y, con este script, el reinicio de la demo fallaría. No se cambió nada.';
   end if;
 end $$;

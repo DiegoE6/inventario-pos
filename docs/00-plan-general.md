@@ -176,6 +176,33 @@ Todas validan `auth.uid()` y el rol cuando aplique, con `SECURITY DEFINER` y `se
 | **8. Roles y marca** | Cajero con permisos limitados, ventas canceladas por dueño, configuración de marca | Cambiando nombre y color en Configuración, el sistema se ve como otro negocio |
 | **9. Pulido** | Revisión de animaciones y diseño, estados vacíos y de error, README con capturas, link en el portafolio | Lo enseñarías sin pena a cualquier dueño |
 
+### Estado (noviembre de 2026): todas las fases terminadas
+
+| Fase | Estado | Documento | PR |
+|---|---|---|---|
+| 0. Arranque | Terminada | [fase-0-arranque.md](fase-0-arranque.md) | #1 |
+| 1. Base de datos | Terminada | [fase-1-base-datos.md](fase-1-base-datos.md) | #2 |
+| 2. Panel y productos | Terminada | [fase-2-panel-productos.md](fase-2-panel-productos.md) | #3 |
+| 3. Punto de venta | Terminada | [fase-3-punto-de-venta.md](fase-3-punto-de-venta.md) | #4 |
+| 4. Inventario | Terminada | [fase-4-inventario.md](fase-4-inventario.md) | #5 |
+| 5. Inicio | Terminada | [fase-5-inicio.md](fase-5-inicio.md) | #6 |
+| 6. Modo demo | Terminada | [fase-6-modo-demo.md](fase-6-modo-demo.md) | #7 |
+| Endurecimiento (Node 22, costos solo dueño, folios sin huecos) | Terminada | [endurecimiento.md](endurecimiento.md) | #8 |
+| 7a. Ventas y reportes | Terminada | [fase-7a-ventas-reportes.md](fase-7a-ventas-reportes.md) | #9 |
+| 7b. Exportar e importar Excel | Terminada | [fase-7b-excel.md](fase-7b-excel.md) | #10 |
+| 8. Roles y marca | Terminada | [fase-8-roles-marca.md](fase-8-roles-marca.md) | #11 |
+| 9a. Pulido, estados vacíos y modo oscuro | Terminada | [fase-9a-pulido.md](fase-9a-pulido.md) | #12 |
+| 9b. Encabezados de seguridad y README | Terminada | [fase-9b-seguridad-readme.md](fase-9b-seguridad-readme.md) | #13 |
+
+Cambios respecto a este plan que conviene saber (el detalle está en cada documento):
+- **La Fase 7 y la 9 se partieron en dos** (7a/7b y 9a/9b), y entre la 6 y la 7 hubo una fase de **endurecimiento**.
+- **Costos:** el cajero nunca recibe costos ni ganancias; ni el dueño lee esas columnas directo, solo por funciones `SECURITY DEFINER` (`20`).
+- **Folios** consecutivos sin huecos con un contador dentro del cobro (`22`), y **cobros y movimientos idempotentes** con una clave del cliente (`12`, `14`).
+- **`v_ventas_por_dia`** se quitó; la reemplaza `ventas_por_dia()` (solo dueño). Los reportes son funciones (`24`).
+- **Modo demo:** tres usuarios demo (dueño, cajero y un segundo cajero), `reset_demo()` a las 03:00 de Monterrey y `avanzar_demo()` cada minuto, que va cobrando las ventas del día (`18`).
+- **Modo oscuro** (Claro / Oscuro / Sistema) y **CSP con nonce** (9a y 9b).
+- **Instalar para un cliente nuevo:** el orden de los SQL está en el README, sin `07`, `18` ni las pruebas.
+
 ## 9. Guion para presentar la demo (2 minutos)
 1. "Imagínese que esta es su ferretería." Abre **Inicio**: ventas de hoy, ganancia y lo que se está acabando.
 2. "Vamos a venderle algo a un cliente." Ve a **Vender**, busca un producto, agrégalo y cobra en efectivo. Enseña el cambio y el ticket.
